@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Hayati — prières, finances, sport, hydratation, nutrition, sommeil et habitudes : ma vie en équilibre." />
+    <meta name="theme-color" content="#f5f5f2" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Hayati" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <title>Hayati — Ma vie en équilibre</title>
+    <script>
+      // Applique le thème avant le premier affichage pour éviter un flash clair/sombre.
+      (function () {
+        var pref = 'system';
+        try {
+          var raw = localStorage.getItem('hayati:data');
+          if (raw) pref = (JSON.parse(raw).state.settings || {}).theme || 'system';
+        } catch (e) {}
+        var dark = pref === 'dark' || (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
