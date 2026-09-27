@@ -346,8 +346,9 @@ export class Match {
     const s = this.state;
     if (s.phase !== 'play' || s.turn !== seat) return;
     const level: BotLevel = this.seats[seat].bot ?? 'medium';
-    // 24 mondes simulés : ~1,5 ms par décision experte, pour garder le serveur fluide sous charge.
-    const card = chooseCard(viewFor(s, seat), level, { rng: this.rng, samples: 24 });
+    // 48 mondes simulés : ~2 ms par décision experte. En dessous, l'expert s'affaiblit nettement
+    // en 2v2 (trois mains cachées à deviner) : 54 % contre Mtwasset avec 24 mondes, 59 % avec 48.
+    const card = chooseCard(viewFor(s, seat), level, { rng: this.rng, samples: 48 });
     this.commit(applyPlay(s, seat, card));
   }
 

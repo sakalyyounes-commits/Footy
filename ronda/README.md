@@ -34,7 +34,7 @@ Le plan de lancement (stores, croissance, revenus) est dans [`docs/LANCEMENT.md`
 | --- | --- |
 | **Modes** | En ligne 1v1 et 2v2 par tables à mise · Amis : table privée avec code, partage WhatsApp, lien d'invitation · Hors ligne contre 3 niveaux de bots · Reprise automatique d'une partie hors ligne interrompue |
 | **Tables en ligne** | Tanger (100) → Fès → Chefchaouen → Essaouira → Casablanca → Marrakech → Rabat (250 000), débloquées par niveau ; le gagnant empoche le pot moins 10 % |
-| **Bots** | *Mbtadi* (débutant), *Mtwasset* (compte les cartes, évalue le risque de darba), *M3allem* (simule des milliers de fins de donne, tient compte des annonces). Les bots en ligne sont **toujours signalés 🤖** |
+| **Bots** | *Mbtadi* (débutant), *Mtwasset* (compte les cartes, évalue le risque de darba), *M3allem* (simule des centaines de fins de donne à chaque coup, tient compte des annonces). Les bots en ligne sont **toujours signalés 🤖** |
 | **Progression** | XP et niveaux, récompense à chaque niveau, statistiques (darbas, missas, rondas, tringas, séries), classement |
 | **Économie** | 2 500 pièces offertes, bonus quotidien sur 7 jours (jusqu'à 5 000), pièces gratuites toutes les 4 h, vidéo récompensée, coup de pouce quand on est à sec, parrainage (+2 000 chacun) |
 | **Boutique** | Dos de cartes (zellige, Majorelle, tapis berbère, Chefchaouen, royal, or, VIP), tapis (riad, Majorelle, ville bleue, Sahara, nuit de Marrakech, palais), cadres d'avatar ; packs de pièces, pack de bienvenue, sans publicité, VIP |
@@ -125,10 +125,12 @@ docker run -d --restart unless-stopped -p 8080:8080 -v ronda-data:/data ronda
 
 Mettre un reverse proxy HTTPS devant (Caddy : `ronda.mondomaine.ma { reverse_proxy localhost:8080 }`).
 
-Capacité mesurée : **200 parties complètes jouées en parallèle** (100 en 1v1, 100 en 2v2 avec bots,
-sans aucun délai) sur un seul processus, avec une latence maximale de la boucle serveur de 22 ms.
-En conditions réelles (une carte toutes les 1 à 2 secondes par table), un petit serveur tient
-plusieurs centaines de tables simultanées. Au-delà, voir [Limites connues](#limites-connues-et-suite).
+Capacité mesurée : **200 parties complètes jouées en parallèle** (100 en 1v1, 100 en 2v2 complétées
+par des bots, sans aucun délai d'animation) sur un seul processus. Pic de latence de la boucle serveur :
+35 ms avec des bots *Mtwasset*, 120 ms dans le pire cas où tous les bots sont des *M3allem* (une décision
+experte coûte 1 à 3 ms). En conditions réelles (une carte toutes les 1 à 2 secondes par table), un petit
+serveur tient plusieurs centaines de tables simultanées. Au-delà, voir
+[Limites connues](#limites-connues-et-suite).
 
 ## Applications Android et iPhone
 
@@ -255,8 +257,11 @@ npm run e2e         # parcours joueurs dans Chromium (après npm run build ; npx
 - **Règles** : distribution, prises et suites, darba simple et en chaîne, missa, annonces avec
   égalités, fin de manche, victoire immédiate, conservation des 40 cartes sur des centaines de parties
   aléatoires, cohérence entre l'aperçu de prise et le coup réel.
-- **Bots** : coups légaux, bon choix sur des positions types ; en simulation, *Mtwasset* bat *Mbtadi*
-  ~90 % du temps et *M3allem* bat *Mtwasset* ~62-65 % (1v1 et 2v2).
+- **Bots** : coups légaux, bon choix sur des positions types. En simulation (parties en 41 points,
+  400 à 600 parties par duel), *Mtwasset* bat *Mbtadi* dans ~92 % des parties en 1v1 et ~85 % en 2v2 ;
+  *M3allem* bat *Mtwasset* dans ~77 % des parties en 1v1 et ~61 % en 2v2 (à quatre, la distribution
+  pèse davantage). Dans les simulations de *M3allem*, chaque joueur raisonne sans voir les autres mains
+  (auparavant il « voyait » la main suivante) : en 1v1, *M3allem* est passé de 67 % à 77 % contre *Mtwasset*.
 - **Serveur** : vrais WebSockets — comptes, reconnexion, file d'attente, tables complétées par des bots,
   salons 2v2 entre amis, abandon, coup illégal, webhook d'achat idempotent, limite anti-abus.
 - **Bout en bout** : le serveur construit sert la version web et deux navigateurs jouent réellement —

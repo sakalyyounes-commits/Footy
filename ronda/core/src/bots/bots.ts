@@ -9,8 +9,8 @@ import { capturePreview, type PlayerView } from '../engine/view';
  * Bots de Ronda.
  * - easy (Mbtadi) : joue surtout au hasard, prend quand il voit une prise.
  * - medium (Mtwasset) : compte les cartes et évalue le risque de darba du joueur suivant.
- * - hard (M3allem) : échantillonne les mains cachées et simule la fin de la manche
- *   (Monte-Carlo « information parfaite ») pour chaque carte possible.
+ * - hard (M3allem) : échantillonne des mains cachées compatibles avec ce qu'il a vu et simule la
+ *   fin de la donne pour chaque carte possible, les joueurs simulés raisonnant comme Mtwasset.
  * Les bots ne voient que la vue du joueur : ils ne trichent jamais.
  */
 export type BotLevel = 'easy' | 'medium' | 'hard';
@@ -96,8 +96,14 @@ export function unseenByRank(view: Pick<PlayerView, 'hand' | 'played'>): number[
   return counts;
 }
 
+/** Ce que le bot moyen regarde : la vue d'un joueur, ou un joueur d'un monde simulé. */
+type MediumSource = Pick<
+  PlayerView,
+  'rules' | 'seat' | 'hand' | 'played' | 'table' | 'pending' | 'lastPlayed' | 'deckCount' | 'handCounts' | 'dealNo' | 'turn'
+>;
+
 /** Taille de la main avec laquelle le joueur `seat` jouera son prochain coup. */
-function nextHandSize(view: PlayerView, seat: Seat): number {
+function nextHandSize(view: MediumSource, seat: Seat): number {
   if (view.handCounts[seat] > 0) return view.handCounts[seat];
   if (view.deckCount === 0) return 0;
   return dealPattern(view.rules.players)[view.dealNo] ?? 0;
@@ -113,7 +119,7 @@ function sequenceAbove(table: readonly Card[], r: number): number {
   return n;
 }
 
-function mediumScores(view: PlayerView, candidates: Card[]): number[] {
+function mediumScores(view: MediumSource, candidates: Card[]): number[] {
   const rules = view.rules;
   const n = rules.players;
   const next = (view.seat + 1) % n;
@@ -357,16 +363,55 @@ function rolloutCardPeek(s: GameState, rng: Rng): Card {
   return best;
 }
 
+/**
+ * Politique « réaliste » : chaque joueur simulé raisonne comme le bot moyen, à partir de ce
+ * qu'il sait vraiment (sa main et les cartes déjà jouées), sans regarder les autres mains.
+ */
+function rolloutCardMedium(s: GameState, rng: Rng): Card {
+  const seat = s.turn;
+  const hand = s.hands[seat];
+  if (hand.length === 1) return hand[0];
+  const candidates = distinctRanks(hand);
+  if (candidates.length === 1) return candidates[0];
+  const scores = mediumScores(
+    {
+      rules: s.rules,
+      seat,
+      hand,
+      played: s.played,
+      table: s.table,
+      pending: s.pending,
+      lastPlayed: s.lastPlayed,
+      deckCount: s.deck.length,
+      handCounts: s.hands.map((h) => h.length),
+      dealNo: s.dealNo,
+      turn: seat,
+    },
+    candidates,
+  );
+  let best = candidates[0];
+  let bestScore = -Infinity;
+  for (let i = 0; i < candidates.length; i++) {
+    const score = scores[i] + rng() * 0.1;
+    if (score > bestScore) {
+      bestScore = score;
+      best = candidates[i];
+    }
+  }
+  return best;
+}
+
 export interface HardOptions {
   /** Politique des joueurs simulés. */
-  rollout: 'blind' | 'peek';
+  rollout: 'blind' | 'peek' | 'medium';
   /** Simuler jusqu'à la fin de la manche ou seulement de la donne en cours. */
   horizon: 'round' | 'deal';
   /** Tenir compte des annonces pour deviner les mains adverses. */
   announcements: boolean;
 }
 
-const DEFAULT_HARD: HardOptions = { rollout: 'peek', horizon: 'deal', announcements: true };
+// Mesuré en 41 points contre l'ancienne politique « peek » : nettement plus fort en 1v1, égal en 2v2.
+const DEFAULT_HARD: HardOptions = { rollout: 'medium', horizon: 'deal', announcements: true };
 
 function hardChoice(view: PlayerView, candidates: Card[], rng: Rng, samples: number, opts: HardOptions = DEFAULT_HARD): Card {
   const myTeam = teamOf(view.seat);
@@ -374,7 +419,7 @@ function hardChoice(view: PlayerView, candidates: Card[], rng: Rng, samples: num
   const baseDiff = view.scores[myTeam] - view.scores[other];
   const basePiles = view.pileCounts[myTeam] - view.pileCounts[other];
   const totals = new Array<number>(candidates.length).fill(0);
-  const policy = opts.rollout === 'peek' ? rolloutCardPeek : rolloutCardBlind;
+  const policy = opts.rollout === 'peek' ? rolloutCardPeek : opts.rollout === 'medium' ? rolloutCardMedium : rolloutCardBlind;
   // Léger a priori du bot moyen pour départager les mondes trop proches.
   const prior = mediumScores(view, candidates);
 
