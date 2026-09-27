@@ -64,6 +64,8 @@ navigateur affiche une page avec un **QR code** et une adresse du type `192.168.
    choisir leur niveau (🤖1 débutant, 🤖2 confirmé, 🤖3 expert). Puis **« Lancer la partie »**.
 
 En 2 contre 2, les **partenaires sont face à face** (en haut et en bas de la table).
+À la fin de la partie, **« Rejouer »** ramène tout le monde à **la même table** (même code, mêmes
+places) : l'hôte n'a plus qu'à relancer pour la revanche.
 
 > 💡 L'ordinateur peut aussi jouer : clique **« Jouer aussi sur cet ordinateur »** sur la page du
 > QR code.

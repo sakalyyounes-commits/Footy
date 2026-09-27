@@ -148,7 +148,8 @@ function GameView({ game }: { game: GameController }) {
       nav.reset({ name: 'online' });
       nav.push({ name: 'matchmaking', mode: d.mode, tableId: d.tableId });
     } else {
-      nav.reset({ name: 'friends' });
+      // Entre amis : on retourne à la même table (rouverte par le serveur) pour la revanche.
+      nav.reset({ name: 'friends', join: d.result?.rematch ?? undefined });
     }
     void showInterstitialAfterGame();
   }

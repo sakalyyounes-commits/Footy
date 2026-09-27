@@ -131,6 +131,7 @@ export class OnlineController extends GameController {
         xp: r.xp,
         levelUp: r.levelUp,
         forfeit: r.forfeit,
+        rematch: r.rematch ?? null,
       },
     });
   }

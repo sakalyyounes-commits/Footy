@@ -97,6 +97,8 @@ export interface MatchResult {
   xp: number;
   levelUp: number | null;
   forfeit: boolean;
+  /** Table privée : code de la même table, rouverte pour la revanche (mêmes places). */
+  rematch?: string | null;
 }
 
 export interface LeaderboardEntry {

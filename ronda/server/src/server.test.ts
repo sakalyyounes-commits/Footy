@@ -368,6 +368,24 @@ describe('salons privés', () => {
     const [eh, ef] = await Promise.all([host.next('match.end', () => true, 30_000), friend.next('match.end', () => true, 30_000)]);
     expect(eh.result.winnerTeam).toBe(ef.result.winnerTeam);
     expect(eh.result.coins).toBe(0);
+
+    // Revanche : la même table se rouvre (même code) et chacun y retrouve sa place et ses bots.
+    const code = created.room.code;
+    expect(eh.result.rematch).toBe(code);
+    expect(ef.result.rematch).toBe(code);
+    // (les messages de salon d'avant la partie sont encore dans les boîtes de réception)
+    friend.inbox.length = 0;
+    host.inbox.length = 0;
+    friend.send({ t: 'room.join', code });
+    const back = await friend.next('room', (m) => m.room.seats[2].player?.name === 'Ami');
+    expect(back.room.seats[1].bot).toBe('hard');
+    expect(back.room.seats[0].player).toBeNull();
+    host.send({ t: 'room.join', code });
+    const full = await host.next('room', (m) => m.room.seats[0].player?.name === 'Hôte');
+    expect(full.room.seats[2].player?.name).toBe('Ami');
+    const leader = full.room.hostId === sh.match.seats[sh.match.seat].player?.id ? host : friend;
+    leader.send({ t: 'room.start' });
+    await Promise.all([host.next('match.start'), friend.next('match.start')]);
   });
 
   it('code inconnu', async () => {

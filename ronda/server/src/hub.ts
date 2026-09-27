@@ -59,7 +59,12 @@ interface Room {
   stake: number;
   seats: RoomSeat[];
   createdAt: number;
+  /** Revanche : chaque joueur de la partie précédente retrouve sa place (profil → place). */
+  reserved?: Record<string, number>;
 }
+
+/** Ce qu'il faut pour rouvrir une table privée à la fin de sa partie. */
+type RoomBlueprint = Pick<Room, 'code' | 'mode' | 'hostId' | 'rules' | 'stake' | 'seats'>;
 
 const ROOM_TTL_MS = 45 * 60 * 1000;
 /** Un joueur qui quitte l'appli (pour partager le code sur WhatsApp…) garde sa place 3 minutes. */
@@ -77,6 +82,8 @@ export class Hub {
   private readonly matchOf = new Map<string, Match>();
   private readonly rooms = new Map<string, Room>();
   private readonly roomOf = new Map<string, Room>();
+  /** Parties privées en cours : de quoi rouvrir leur table pour la revanche. */
+  private readonly rematchOf = new Map<string, RoomBlueprint>();
   private readonly queues = new Map<string, QueueEntry[]>();
   private readonly queueOf = new Map<string, string>();
   /** Créations de comptes récentes par adresse IP (limite anti-abus). */
@@ -488,7 +495,7 @@ export class Hub {
     this.startMatch({ mode, rules: makeRules(players), seats, stake: table.entry, tableId: table.id, isPrivate: false });
   }
 
-  private startMatch(opts: { mode: Mode; rules: Rules; seats: MatchSeat[]; stake: number; tableId: string | null; isPrivate: boolean }): void {
+  private startMatch(opts: { mode: Mode; rules: Rules; seats: MatchSeat[]; stake: number; tableId: string | null; isPrivate: boolean }): Match {
     for (const s of opts.seats) {
       if (!s.profileId) continue;
       const p = this.store.getProfile(s.profileId)!;
@@ -508,6 +515,7 @@ export class Hub {
     this.matches.set(match.id, match);
     for (const s of opts.seats) if (s.profileId) this.matchOf.set(s.profileId, match);
     match.start();
+    return match;
   }
 
   private settle(match: Match, outcome: SeatOutcome, winner: Team | null): { result: MatchResult; profile: Profile } | null {
@@ -555,12 +563,33 @@ export class Hub {
 
   private onMatchEnd(match: Match, outcomes: SeatOutcome[], winner: Team | null): void {
     this.matches.delete(match.id);
+    const blueprint = this.rematchOf.get(match.id);
+    this.rematchOf.delete(match.id);
+    const rematch = blueprint ? this.reopenRoom(blueprint) : null;
     for (const outcome of outcomes) {
       if (this.matchOf.get(outcome.profileId) === match) this.matchOf.delete(outcome.profileId);
       const settled = this.settle(match, outcome, winner);
-      if (settled) this.sendTo(outcome.profileId, { t: 'match.end', result: settled.result, profile: freshProfile(settled.profile) });
+      if (settled) {
+        this.sendTo(outcome.profileId, { t: 'match.end', result: { ...settled.result, rematch }, profile: freshProfile(settled.profile) });
+      }
     }
     this.leaderboardCache = null;
+  }
+
+  /** Revanche entre amis : la table se rouvre avec le même code et les places de chacun réservées. */
+  private reopenRoom(bp: RoomBlueprint): string {
+    let code = bp.code;
+    while (this.rooms.has(code)) code = randomCode(5);
+    const reserved: Record<string, number> = {};
+    const seats: RoomSeat[] = bp.seats.map((s, i) => {
+      if (s && 'profileId' in s) {
+        reserved[s.profileId] = i;
+        return null;
+      }
+      return s && 'bot' in s ? { bot: s.bot } : null;
+    });
+    this.rooms.set(code, { code, mode: bp.mode, hostId: bp.hostId, rules: bp.rules, stake: bp.stake, seats, createdAt: Date.now(), reserved });
+    return code;
   }
 
   // -------------------------------------------------------------------------------------------
@@ -615,12 +644,19 @@ export class Hub {
     if (this.roomOf.get(p.id) === room) return this.send(client, { t: 'room', room: this.roomState(room) });
     if (this.busy(p.id)) return this.error(client, 'busy');
     if (!this.wallet.canAfford(p, room.stake)) return this.error(client, 'not_enough_coins');
-    // Priorité aux places vides, sinon on remplace un bot.
-    let seat = room.seats.findIndex((s) => s === null);
+    // Revanche : sa place d'avant. Sinon une place vide non réservée, puis n'importe quelle place
+    // vide, et enfin la place d'un bot.
+    const reserved = room.reserved ?? {};
+    const mine = reserved[p.id];
+    const taken = new Set(Object.entries(reserved).filter(([id]) => id !== p.id).map(([, i]) => i));
+    let seat = mine !== undefined && room.seats[mine] === null ? mine : room.seats.findIndex((s, i) => s === null && !taken.has(i));
+    if (seat < 0) seat = room.seats.findIndex((s) => s === null);
     if (seat < 0) seat = room.seats.findIndex((s) => s !== null && 'bot' in s);
     if (seat < 0) return this.error(client, 'room_full');
     this.leaveQueue(p.id);
     room.seats[seat] = { profileId: p.id };
+    // Table rouverte : le premier revenu la dirige tant que l'hôte d'origine n'est pas là.
+    if (!room.seats.some((s) => s !== null && 'profileId' in s && s.profileId === room.hostId)) room.hostId = p.id;
     this.roomOf.set(p.id, room);
     this.broadcastRoom(room);
   }
@@ -684,7 +720,16 @@ export class Hub {
       this.roomOf.delete(h.profileId);
       this.roomGrace.delete(h.profileId);
     }
-    this.startMatch({ mode: room.mode, rules: room.rules, seats, stake: room.stake, tableId: null, isPrivate: true });
+    const blueprint: RoomBlueprint = {
+      code: room.code,
+      mode: room.mode,
+      hostId: room.hostId,
+      rules: room.rules,
+      stake: room.stake,
+      seats: room.seats.map((s) => (s && 'profileId' in s ? { profileId: s.profileId } : s && 'bot' in s ? { bot: s.bot } : null)),
+    };
+    const match = this.startMatch({ mode: room.mode, rules: room.rules, seats, stake: room.stake, tableId: null, isPrivate: true });
+    this.rematchOf.set(match.id, blueprint);
   }
 
   // -------------------------------------------------------------------------------------------

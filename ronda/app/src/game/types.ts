@@ -62,6 +62,8 @@ export interface ResultDisplay {
   xp: number | null;
   levelUp: number | null;
   forfeit: boolean;
+  /** Table privée rouverte pour la revanche (code), en ligne uniquement. */
+  rematch?: string | null;
 }
 
 export interface GameDisplay {
