@@ -1,0 +1,8 @@
+**/node_modules
+**/dist
+data
+app/android
+app/ios
+app/assets
+*.log
+.git

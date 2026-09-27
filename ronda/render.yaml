@@ -1,0 +1,26 @@
+# Déploiement en un clic sur Render.com (Blueprint) : New + → Blueprint → choisir ce dépôt.
+# Le disque persistant garde les profils des joueurs entre deux déploiements.
+services:
+  - type: web
+    name: ronda-dyalna
+    runtime: docker
+    rootDir: ronda
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /health
+    disk:
+      name: ronda-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: TURN_MS
+        value: '20000'
+      - key: BOT_FILL_MS
+        value: '12000'
+      - key: REVENUECAT_WEBHOOK_SECRET
+        generateValue: true
+      - key: PLAY_STORE_URL
+        sync: false
+      - key: APP_STORE_URL
+        sync: false

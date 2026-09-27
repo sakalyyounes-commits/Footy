@@ -21,6 +21,7 @@
     "start": "npm run start -w @ronda/server"
   },
   "devDependencies": {
+    "playwright": "^1.63.0",
     "typescript": "^7.0.2",
     "vitest": "^5.0.2"
   }

@@ -194,6 +194,26 @@ export function isValidEmote(id: string): boolean {
 }
 
 export const AVATAR_COUNT = 16;
+
+/** Personnages des bots : prénom et avatar assortis (les bots sont toujours signalés comme tels). */
+export const BOT_PERSONAS: readonly { name: string; avatar: number }[] = [
+  { name: 'Karim', avatar: 0 },
+  { name: 'Salma', avatar: 1 },
+  { name: 'Hamid', avatar: 2 },
+  { name: 'Youssef', avatar: 3 },
+  { name: 'Nadia', avatar: 4 },
+  { name: 'Brahim', avatar: 5 },
+  { name: 'Mehdi', avatar: 6 },
+  { name: 'Anas', avatar: 7 },
+  { name: 'Hassan', avatar: 8 },
+  { name: 'Imane', avatar: 9 },
+  { name: 'Omar', avatar: 10 },
+  { name: 'Zineb', avatar: 11 },
+  { name: 'Ayoub', avatar: 12 },
+  { name: 'Rachid', avatar: 13 },
+  { name: 'Hajar', avatar: 14 },
+  { name: 'Driss', avatar: 15 },
+];
 export const NAME_MIN = 2;
 export const NAME_MAX = 16;
 

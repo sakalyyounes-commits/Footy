@@ -1,6 +1,7 @@
 import { randomInt } from 'node:crypto';
 import {
   applyPlay,
+  BOT_PERSONAS,
   chooseCard,
   cryptoRng,
   newDeck,
@@ -365,35 +366,23 @@ export class Match {
   }
 }
 
-const BOT_NAMES = [
-  'Karim',
-  'Salma',
-  'Hamid',
-  'Nadia',
-  'Youssef',
-  'Khadija',
-  'Mehdi',
-  'Imane',
-  'Omar',
-  'Zineb',
-  'Anas',
-  'Hajar',
-  'Rachid',
-  'Samira',
-  'Ayoub',
-  'Loubna',
-];
-
 const BOT_LEVEL_NUMBER: Record<BotLevel, [number, number]> = { easy: [1, 5], medium: [4, 12], hard: [10, 25] };
 
 export function botSeat(level: BotLevel, taken: Set<string>): MatchSeat {
-  const free = BOT_NAMES.filter((n) => !taken.has(n));
-  const name = free[randomInt(free.length)] ?? 'Bot';
-  taken.add(name);
+  const free = BOT_PERSONAS.filter((p) => !taken.has(p.name));
+  const persona = free[randomInt(free.length)] ?? BOT_PERSONAS[0];
+  taken.add(persona.name);
   const [lo, hi] = BOT_LEVEL_NUMBER[level];
   return {
     profileId: null,
-    public: { id: `bot-${name.toLowerCase()}`, name, avatar: randomInt(16), level: lo + randomInt(hi - lo + 1), frame: 'frame-none', vip: false },
+    public: {
+      id: `bot-${persona.name.toLowerCase()}`,
+      name: persona.name,
+      avatar: persona.avatar,
+      level: lo + randomInt(hi - lo + 1),
+      frame: 'frame-none',
+      vip: false,
+    },
     bot: level,
     connected: true,
     auto: false,

@@ -1,0 +1,127 @@
+name: Ronda — tests et applications
+
+on:
+  push:
+    branches: [main, 'claude/**']
+    paths: ['ronda/**', '.github/workflows/ronda.yml']
+  pull_request:
+    paths: ['ronda/**', '.github/workflows/ronda.yml']
+  workflow_dispatch:
+    inputs:
+      ios:
+        description: 'Compiler aussi l’application iOS (simulateur, sans signature)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ronda-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: ronda
+
+jobs:
+  test:
+    name: Tests, types et builds web/serveur
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ronda/package-lock.json
+      - run: npm ci
+      - name: Vérification des types
+        run: npm run typecheck
+      - name: Tests (règles, bots, serveur)
+        run: npm test
+      - name: Build de l’application web
+        run: npm run build -w @ronda/app
+      - name: Build du serveur
+        run: npm run build -w @ronda/server
+
+  android:
+    name: APK Android (debug)
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ronda/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci
+      - name: Build web pour l’application
+        env:
+          # Adresse du serveur de jeu : Settings → Secrets and variables → Actions → Variables.
+          VITE_SERVER_URL: ${{ vars.RONDA_SERVER_URL }}
+          VITE_ADMOB_ANDROID_REWARDED: ${{ vars.ADMOB_ANDROID_REWARDED }}
+          VITE_ADMOB_ANDROID_INTERSTITIAL: ${{ vars.ADMOB_ANDROID_INTERSTITIAL }}
+          VITE_REVENUECAT_ANDROID_KEY: ${{ vars.REVENUECAT_ANDROID_KEY }}
+        run: npm run build -w @ronda/app
+      - name: Synchronisation Capacitor
+        working-directory: ronda/app
+        run: npx cap sync android
+      - name: Compilation Gradle
+        working-directory: ronda/app/android
+        run: ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ronda-dyalna-debug-apk
+          path: ronda/app/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+  docker:
+    name: Image Docker du serveur
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build de l’image
+        run: docker build -t ronda-dyalna .
+      - name: Démarrage et contrôle de santé
+        run: |
+          docker run -d --name ronda -p 8080:8080 ronda-dyalna
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8080/health; then echo; break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8080/api/status
+          curl -fsS -H 'Accept: text/html' http://127.0.0.1:8080/ | grep -q 'Ronda'
+          docker logs ronda
+
+  ios:
+    name: Application iOS (simulateur)
+    if: github.event_name == 'workflow_dispatch' && inputs.ios
+    needs: test
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ronda/package-lock.json
+      - run: npm ci
+      - run: npm run build -w @ronda/app
+        env:
+          VITE_SERVER_URL: ${{ vars.RONDA_SERVER_URL }}
+      - working-directory: ronda/app
+        run: npx cap sync ios
+      - name: Compilation Xcode (sans signature)
+        working-directory: ronda/app/ios/App
+        run: >
+          xcodebuild -project App.xcodeproj -scheme App -configuration Debug
+          -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO build
