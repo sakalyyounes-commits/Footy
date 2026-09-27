@@ -373,6 +373,9 @@ describe('salons privés', () => {
     const code = created.room.code;
     expect(eh.result.rematch).toBe(code);
     expect(ef.result.rematch).toBe(code);
+    // Les clients de test jouent en rafale : on laisse leur quota de messages anti-abus se
+    // recharger (12 par seconde) avant la revanche, comme le ferait un joueur devant l'écran de fin.
+    await new Promise((r) => setTimeout(r, 2_600));
     // (les messages de salon d'avant la partie sont encore dans les boîtes de réception)
     friend.inbox.length = 0;
     host.inbox.length = 0;
