@@ -8,7 +8,7 @@ const config: CapacitorConfig = {
   appId: 'com.rondadyalna.app',
   appName: 'Ronda Dyalna',
   webDir: 'dist',
-  backgroundColor: '#062b21',
+  backgroundColor: '#140b38',
   android: {
     allowMixedContent: false,
   },
@@ -19,7 +19,7 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 1200,
       launchAutoHide: true,
-      backgroundColor: '#062b21',
+      backgroundColor: '#140b38',
       showSpinner: false,
       androidScaleType: 'CENTER_CROP',
       splashFullScreen: true,
@@ -27,7 +27,7 @@ const config: CapacitorConfig = {
     },
     StatusBar: {
       style: 'DARK',
-      backgroundColor: '#062b21',
+      backgroundColor: '#140b38',
       overlaysWebView: true,
     },
   },

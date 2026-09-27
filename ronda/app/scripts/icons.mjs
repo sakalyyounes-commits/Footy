@@ -44,7 +44,7 @@ const star = (cx, cy, o, i) =>
   }).join(' ');
 writeFileSync(
   join(pub, 'favicon.svg'),
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0a4a37"/><polygon points="${star(32, 32, 29, 21)}" fill="#e8b84a" stroke="#7a5310" stroke-width="1.2"/><polygon points="${star(32, 32, 21, 15.5)}" fill="#0a3d2f"/><polygon points="${star(32, 32, 12, 8.5)}" fill="#c0392b"/><circle cx="32" cy="32" r="3.5" fill="#f2c75c"/></svg>\n`,
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2a1670"/><circle cx="32" cy="33" r="27" fill="#7a4a00"/><circle cx="32" cy="32" r="27" fill="#f5b820"/><circle cx="32" cy="32" r="23.5" fill="none" stroke="#fffbe0" stroke-width="6" stroke-dasharray="6.7 8.1"/><circle cx="32" cy="32" r="18" fill="#d1241a" stroke="#7a4a00" stroke-width="1.2"/><polygon points="${star(32, 32, 11, 6.6)}" fill="#ffd54a" stroke="#7a4a00" stroke-width="0.8"/></svg>\n`,
 );
 console.log('✓ public/favicon.svg');
 await browser.close();
