@@ -30,6 +30,11 @@ export interface ServerConfig {
   appStoreUrl: string;
   /** Schéma de lien profond de l'application mobile. */
   appScheme: string;
+  /**
+   * Soirée entre amis sur le Wi-Fi de la maison : page /soiree avec QR code, adresses du réseau
+   * local dans /api/status, port suivant essayé si le port choisi est déjà pris.
+   */
+  localParty: boolean;
 }
 
 function num(value: string | undefined, fallback: number): number {
@@ -56,6 +61,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     playStoreUrl: env.PLAY_STORE_URL ?? '',
     appStoreUrl: env.APP_STORE_URL ?? '',
     appScheme: env.APP_SCHEME ?? 'rondadyalna',
+    localParty: env.LOCAL_PARTY === '1',
   };
 }
 
@@ -79,6 +85,7 @@ export function testConfig(overrides: Partial<ServerConfig> = {}): ServerConfig 
     playStoreUrl: '',
     appStoreUrl: '',
     appScheme: 'rondadyalna',
+    localParty: false,
     ...overrides,
   };
 }

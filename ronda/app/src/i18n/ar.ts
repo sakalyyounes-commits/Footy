@@ -41,6 +41,10 @@ export const ar: Dictionary = {
   'home.ranking': 'الترتيب',
   'home.rules': 'القواعد',
   'home.free_coins': 'فابور',
+  'home.promo_daily': 'البونوس ديال اليوم كيتسناك!',
+  'home.promo_daily_sub': 'حتى 5000 بيصة فابور',
+  'home.promo_invite': 'عيّط على صحابك',
+  'home.promo_invite_sub': '+{n} بيصة لكل واحد بالكود ديالك',
 
   'mode.1v1': 'واحد ضد واحد',
   'mode.2v2': 'جوج ضد جوج',
@@ -83,6 +87,7 @@ export const ar: Dictionary = {
 
   'room.title': 'الطابلة ديالك',
   'room.code': 'الكود',
+  'room.scan': 'سكاني باش تدخل',
   'room.share_text': 'أجي تلعب معايا الروندا فـ«روندا ديالنا»! 🃏 الكود: {code}',
   'room.invite': 'عيط',
   'room.whatsapp': 'واتساب',
@@ -156,6 +161,7 @@ export const ar: Dictionary = {
   'game.pile': 'المجموع',
   'game.drop': 'حطها',
   'game.hint': 'نصيحة',
+  'game.dealer': 'الموزّع',
   'game.emotes': 'رسائل',
   'game.opponent_left': 'الخصم خرج',
   'game.pending': 'الباكية فاللعب',

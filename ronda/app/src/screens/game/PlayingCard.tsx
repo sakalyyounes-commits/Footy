@@ -21,6 +21,8 @@ interface Props {
   onDragUp?: () => void;
   /** Identifiant d'animation partagée : une carte « voyage » d'une zone à l'autre. */
   shared?: boolean;
+  /** La carte arrive face cachée puis se retourne en 3D (délai en secondes). */
+  flipIn?: number | false;
 }
 
 /** Une carte animée. Les cartes visibles partagent un layoutId : elles glissent de la main au tapis puis au tas. */
@@ -39,8 +41,10 @@ export function PlayingCard({
   drag,
   onDragUp,
   shared = true,
+  flipIn = false,
 }: Props) {
   const visible = faceUp && card !== undefined;
+  const flipping = visible && flipIn !== false;
   return (
     <motion.div
       layoutId={visible && shared ? `c${card}` : undefined}
@@ -61,7 +65,25 @@ export function PlayingCard({
       }}
       whileTap={onClick ? { scale: 0.97 } : undefined}
     >
-      {visible ? <CardFace card={card} /> : <CardBack back={back} />}
+      {flipping ? (
+        <motion.div
+          className="pcard-flip"
+          initial={{ rotateY: 180 }}
+          animate={{ rotateY: 0 }}
+          transition={{ delay: flipIn || 0, duration: 0.5, ease: [0.3, 0.7, 0.2, 1] }}
+        >
+          <div className="pcard-face">
+            <CardFace card={card} />
+          </div>
+          <div className="pcard-face back">
+            <CardBack back={back} />
+          </div>
+        </motion.div>
+      ) : visible ? (
+        <CardFace card={card} />
+      ) : (
+        <CardBack back={back} />
+      )}
     </motion.div>
   );
 }

@@ -40,6 +40,10 @@ export const en: Dictionary = {
   'home.ranking': 'Ranking',
   'home.rules': 'Rules',
   'home.free_coins': 'Free',
+  'home.promo_daily': 'Your daily bonus is waiting!',
+  'home.promo_daily_sub': 'Up to 5,000 free coins',
+  'home.promo_invite': 'Invite your friends',
+  'home.promo_invite_sub': '+{n} coins each with your code',
 
   'mode.1v1': '1 vs 1',
   'mode.2v2': '2 vs 2',
@@ -82,6 +86,7 @@ export const en: Dictionary = {
 
   'room.title': 'Your table',
   'room.code': 'Code',
+  'room.scan': 'Scan to join',
   'room.share_text': 'Join my Ronda Dyalna table! 🃏 Code: {code}',
   'room.invite': 'Invite',
   'room.whatsapp': 'WhatsApp',
@@ -155,6 +160,7 @@ export const en: Dictionary = {
   'game.pile': 'Captured',
   'game.drop': 'Drop',
   'game.hint': 'Hint',
+  'game.dealer': 'Dealer',
   'game.emotes': 'Messages',
   'game.opponent_left': 'Opponent left',
   'game.pending': 'Pile at stake',

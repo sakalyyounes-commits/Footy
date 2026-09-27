@@ -1,9 +1,8 @@
 import { BookOpen, Gift, Globe2, Play, Settings, ShoppingBag, Trophy, Users, Bot } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, type ReactNode } from 'react';
-import { levelProgress } from '@ronda/core';
+import { levelProgress, REFERRAL_COINS, type Card } from '@ronda/core';
 import { sfx } from '../audio/audio';
-import { starPoints } from '../cards/CardDefs';
 import { FramedAvatar } from '../components/Avatar';
 import { DailyModal, dailyAvailable } from '../components/DailyModal';
 import { Coins, Logo } from '../components/ui';
@@ -12,18 +11,7 @@ import { LocalController, loadSavedGame } from '../game/local';
 import { useNav } from '../store/nav';
 import { useSession } from '../store/session';
 import { useSettings } from '../store/settings';
-
-function ModeIcon({ children }: { children: ReactNode }) {
-  return (
-    <div className="mode-icon">
-      <svg className="star" viewBox="0 0 60 60" aria-hidden="true">
-        <polygon points={starPoints(30, 30, 29, 22)} fill="url(#g-gold)" stroke="#7a5310" strokeWidth="1.5" />
-        <polygon points={starPoints(30, 30, 21, 16)} fill="#fff0b8" opacity="0.5" />
-      </svg>
-      <span className="glyph">{children}</span>
-    </div>
-  );
-}
+import { PlayingCard } from './game/PlayingCard';
 
 function ModeCard({ cls, icon, title, sub, live, onClick, delay }: {
   cls: string;
@@ -45,13 +33,52 @@ function ModeCard({ cls, icon, title, sub, live, onClick, delay }: {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, type: 'spring', stiffness: 260, damping: 24 }}
     >
-      <ModeIcon>{icon}</ModeIcon>
+      <span className="mode-icon">{icon}</span>
       <div className="mode-text">
         <div className="mode-title">{title}</div>
         <div className="mode-sub">{sub}</div>
         {live && <div className="mode-live">{live}</div>}
       </div>
     </motion.button>
+  );
+}
+
+/** Cartes de l'éventail d'accueil : as d'oros, cavalier de copas, roi d'espadas, 7 de bastos. */
+const HERO_CARDS: Card[] = [0, 18, 29, 36];
+
+function ChipStack({ colors, style }: { colors: string[]; style: React.CSSProperties }) {
+  return (
+    <div className="chip-stack" style={style}>
+      {colors.map((c, i) => (
+        <span key={i} className={`chip3d ${c}`} />
+      ))}
+    </div>
+  );
+}
+
+/** Décor de l'accueil : éventail de cartes en 3D sous la lumière, piles de jetons. */
+function HeroScene() {
+  return (
+    <div className="hero-scene" aria-hidden="true">
+      <div className="hero-light" />
+      <div className="hero-fan">
+        {HERO_CARDS.map((c, i) => (
+          <PlayingCard
+            key={c}
+            card={c}
+            width={64}
+            shared={false}
+            initial={{ rotate: 0, opacity: 0, y: 30 }}
+            animate={{ rotate: (i - 1.5) * 15, opacity: 1, y: Math.abs(i - 1.5) * 6 }}
+            transition={{ delay: 0.1 + i * 0.08, type: 'spring', stiffness: 200, damping: 18 }}
+          />
+        ))}
+      </div>
+      <ChipStack colors={['red', 'red', 'red', 'black']} style={{ left: '9%', bottom: 18 }} />
+      <ChipStack colors={['blue', 'blue', 'gold']} style={{ left: '19%', bottom: 6 }} />
+      <ChipStack colors={['green', 'green', 'green', 'green', 'red']} style={{ right: '10%', bottom: 16 }} />
+      <ChipStack colors={['gold', 'black']} style={{ right: '21%', bottom: 4 }} />
+    </div>
   );
 }
 
@@ -79,7 +106,7 @@ export function Home() {
     <div className="screen">
       <div className="home-top">
         <button className="player-chip" onClick={() => nav.push({ name: 'profile' })}>
-          <FramedAvatar index={avatar} size={48} frame={profile?.equipped.frame ?? 'frame-none'} />
+          <FramedAvatar index={avatar} size={46} frame={profile?.equipped.frame ?? 'frame-none'} />
           <div style={{ minWidth: 0 }}>
             <div className="name">{name || profile?.name || t('common.you')}</div>
             <div className="row" style={{ gap: 6 }}>
@@ -97,14 +124,14 @@ export function Home() {
       </div>
 
       <div className="home-hero">
+        <HeroScene />
         <Logo />
-        <p className="subtitle">{t('app.tagline')}</p>
       </div>
 
       <div className="mode-list">
         <ModeCard
           cls="online"
-          icon={<Globe2 size={28} strokeWidth={2.4} />}
+          icon={<Globe2 size={32} strokeWidth={2.4} />}
           title={t('home.online')}
           sub={t('home.online_sub')}
           live={status === 'online' ? t('common.online', { n: formatNumber(Math.max(online, 1), lang) }) : undefined}
@@ -113,7 +140,7 @@ export function Home() {
         />
         <ModeCard
           cls="friends"
-          icon={<Users size={28} strokeWidth={2.4} />}
+          icon={<Users size={24} strokeWidth={2.6} />}
           title={t('home.friends')}
           sub={t('home.friends_sub')}
           onClick={() => nav.push({ name: 'friends' })}
@@ -121,13 +148,32 @@ export function Home() {
         />
         <ModeCard
           cls="offline"
-          icon={<Bot size={28} strokeWidth={2.4} />}
+          icon={<Bot size={24} strokeWidth={2.6} />}
           title={t('home.offline')}
           sub={t('home.offline_sub')}
           onClick={() => nav.push({ name: 'offline' })}
           delay={0.19}
         />
       </div>
+
+      <motion.button
+        className={`promo-banner ${giftReady ? 'daily' : 'invite'}`}
+        onClick={() => (giftReady ? setDaily(true) : nav.push({ name: 'profile' }))}
+        initial={{ opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.26 }}
+      >
+        <span className="promo-art" aria-hidden="true">
+          {giftReady ? <Gift size={30} strokeWidth={2.4} /> : <Users size={28} strokeWidth={2.4} />}
+        </span>
+        <span className="promo-text">
+          <b>{giftReady ? t('home.promo_daily') : t('home.promo_invite')}</b>
+          <span>
+            {giftReady ? t('home.promo_daily_sub') : t('home.promo_invite_sub', { n: formatNumber(REFERRAL_COINS, lang) })}
+          </span>
+        </span>
+        <span className="promo-go">›</span>
+      </motion.button>
 
       {saved && (
         <button className="resume-banner" onClick={resume}>
@@ -139,24 +185,34 @@ export function Home() {
         </button>
       )}
 
-      <div className="home-dock">
-        <button className="dock-btn" onClick={() => setDaily(true)}>
-          <Gift size={24} />
-          {t('home.daily')}
-          {giftReady && <span className="badge">1</span>}
-        </button>
-        <button className="dock-btn" onClick={() => nav.push({ name: 'shop' })}>
-          <ShoppingBag size={24} />
-          {t('home.shop')}
-        </button>
-        <button className="dock-btn" onClick={() => nav.push({ name: 'ranking' })}>
-          <Trophy size={24} />
-          {t('home.ranking')}
-        </button>
-        <button className="dock-btn" onClick={() => nav.push({ name: 'rules' })}>
-          <BookOpen size={24} />
-          {t('home.rules')}
-        </button>
+      <div className="home-dock-wrap">
+        <div className="home-dock">
+          <button className="dock-btn" onClick={() => setDaily(true)}>
+            <span className="dock-icon">
+              <Gift size={22} strokeWidth={2.4} />
+            </span>
+            {t('home.daily')}
+            {giftReady && <span className="badge">1</span>}
+          </button>
+          <button className="dock-btn" onClick={() => nav.push({ name: 'shop' })}>
+            <span className="dock-icon">
+              <ShoppingBag size={22} strokeWidth={2.4} />
+            </span>
+            {t('home.shop')}
+          </button>
+          <button className="dock-btn" onClick={() => nav.push({ name: 'ranking' })}>
+            <span className="dock-icon">
+              <Trophy size={22} strokeWidth={2.4} />
+            </span>
+            {t('home.ranking')}
+          </button>
+          <button className="dock-btn" onClick={() => nav.push({ name: 'rules' })}>
+            <span className="dock-icon">
+              <BookOpen size={22} strokeWidth={2.4} />
+            </span>
+            {t('home.rules')}
+          </button>
+        </div>
       </div>
 
       <DailyModal open={daily} onClose={() => setDaily(false)} />

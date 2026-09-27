@@ -7,12 +7,18 @@ import { useSettings } from '../store/settings';
 import { useToasts } from '../store/toast';
 import { starPoints } from '../cards/CardDefs';
 
-export function CoinIcon({ size = 20 }: { size?: number }) {
+/** Pièce du jeu : un jeton de casino doré, vu de face. */
+export function CoinIcon({ size = 26 }: { size?: number }) {
   return (
     <svg viewBox="0 0 40 40" width={size} height={size} className="coin-icon" aria-hidden="true">
-      <circle cx="20" cy="20" r="18" fill="url(#g-gold)" stroke="#7a5310" strokeWidth="2.5" />
-      <circle cx="20" cy="20" r="12.5" fill="none" stroke="#7a5310" strokeWidth="1.5" opacity="0.7" />
-      <polygon points={starPoints(20, 20, 9, 5.5)} fill="#c0392b" stroke="#7a5310" strokeWidth="1" />
+      <circle cx="20" cy="20" r="19" fill="#8a5a00" />
+      <circle cx="20" cy="19" r="18" fill="url(#g-gold)" />
+      <g stroke="#fffbe0" strokeWidth="4.5" strokeDasharray="4.2 5.2" fill="none" opacity="0.9">
+        <circle cx="20" cy="19" r="15.8" />
+      </g>
+      <circle cx="20" cy="19" r="11" fill="#e8a410" stroke="#8a5a00" strokeWidth="1.2" />
+      <polygon points={starPoints(20, 19, 7.5, 4.2)} fill="#fff3c4" stroke="#8a5a00" strokeWidth="0.8" />
+      <ellipse cx="15" cy="12" rx="6" ry="3" fill="#fff" opacity="0.35" />
     </svg>
   );
 }
@@ -157,20 +163,13 @@ export function Toasts() {
   );
 }
 
-/** Logo : « روندا » en calligraphie, « RONDA DYALNA » et une étoile de zellige. */
+/** Logo : « RONDA » en lettres dorées en relief, ruban « DYALNA » et calligraphie « روندا ». */
 export function Logo({ compact = false }: { compact?: boolean }) {
   return (
     <div className={`logo ${compact ? 'compact' : ''}`}>
-      <svg viewBox="0 0 120 120" className="logo-star" aria-hidden="true">
-        <polygon points={starPoints(60, 60, 58, 42)} fill="url(#g-gold)" stroke="#7a5310" strokeWidth="2" />
-        <polygon points={starPoints(60, 60, 44, 32)} fill="#0a3d2f" stroke="#f2c75c" strokeWidth="1.5" />
-        <polygon points={starPoints(60, 60, 24, 16)} fill="#c0392b" stroke="#f2c75c" strokeWidth="1.2" />
-        <circle cx="60" cy="60" r="7" fill="url(#g-gold)" />
-      </svg>
-      <div className="logo-text">
-        <div className="logo-ar">روندا</div>
-        <div className="logo-latin">RONDA DYALNA</div>
-      </div>
+      <div className="logo-word">RONDA</div>
+      <div className="logo-ribbon">DYALNA</div>
+      {!compact && <div className="logo-ar">روندا</div>}
     </div>
   );
 }

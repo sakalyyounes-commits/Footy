@@ -27,8 +27,8 @@ export default defineConfig({
         scope: './',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#062b21',
-        theme_color: '#062b21',
+        background_color: '#140b38',
+        theme_color: '#140b38',
         categories: ['games', 'card'],
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },

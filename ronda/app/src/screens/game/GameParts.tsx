@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { Bot, Layers, WifiOff } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Bot, WifiOff } from 'lucide-react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { rankIndex, teamOf, type Card, type GameEvent, type Seat, type Team } from '@ronda/core';
 import { FramedAvatar } from '../../components/Avatar';
 import { useT } from '../../i18n';
@@ -29,7 +29,7 @@ export function entryFrom(pos: SeatPos) {
   }
 }
 
-/** Anneau de compte à rebours autour de l'avatar du joueur actif. */
+/** Anneau de compte à rebours autour de l'avatar du joueur actif (vert, puis orange, puis rouge). */
 export function TimerRing({ deadline, total, size }: { deadline: number | null; total: number; size: number }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -40,22 +40,23 @@ export function TimerRing({ deadline, total, size }: { deadline: number | null; 
   if (!deadline || total <= 0) return null;
   const remaining = Math.max(0, deadline - now);
   const ratio = Math.min(1, remaining / total);
-  const r = size / 2 + 1;
+  const box = size + 14;
+  const r = size / 2 + 3;
   const c = 2 * Math.PI * r;
-  const color = ratio > 0.5 ? '#f2c75c' : ratio > 0.25 ? '#ff9f43' : '#ff5e4d';
+  const color = ratio > 0.5 ? '#48e27a' : ratio > 0.25 ? '#ffc53d' : '#ff4d4d';
   return (
-    <svg className="seat-ring" viewBox={`0 0 ${size + 10} ${size + 10}`} width={size + 10} height={size + 10}>
-      <circle cx={(size + 10) / 2} cy={(size + 10) / 2} r={r} stroke="rgba(0,0,0,.35)" />
+    <svg className="seat-ring" viewBox={`0 0 ${box} ${box}`} width={box} height={box}>
+      <circle cx={box / 2} cy={box / 2} r={r} stroke="rgba(0,0,0,.45)" />
       <circle
-        cx={(size + 10) / 2}
-        cy={(size + 10) / 2}
+        cx={box / 2}
+        cy={box / 2}
         r={r}
         stroke={color}
         strokeDasharray={c}
         strokeDashoffset={c * (1 - ratio)}
         strokeLinecap="round"
-        transform={`rotate(-90 ${(size + 10) / 2} ${(size + 10) / 2})`}
-        style={{ transition: 'stroke-dashoffset .2s linear, stroke .3s' }}
+        transform={`rotate(-90 ${box / 2} ${box / 2})`}
+        style={{ transition: 'stroke-dashoffset .2s linear, stroke .3s', filter: `drop-shadow(0 0 4px ${color})` }}
       />
     </svg>
   );
@@ -91,37 +92,44 @@ interface SeatProps {
   bubble: Bubble | undefined;
   dealing: boolean;
   dealer: boolean;
+  style?: CSSProperties;
 }
 
-/** Place d'un autre joueur : avatar, nom, niveau et cartes cachées. */
-export function SeatView({ info, pos, active, deadline, turnMs, count, back, bubble, dealing, dealer }: SeatProps) {
+/**
+ * Place d'un autre joueur, posée sur le bourrelet de la table : avatar cerclé d'or, plaque avec le
+ * nom, bouton « donneur » et cartes cachées devant lui, côté tapis.
+ */
+export function SeatView({ info, pos, active, deadline, turnMs, count, back, bubble, dealing, dealer, style }: SeatProps) {
   const t = useT();
   const side = pos === 'left' || pos === 'right';
-  const avatarSize = side ? 42 : 50;
-  const cw = side ? 28 : 34;
+  const avatarSize = side ? 46 : 52;
+  const cw = side ? 22 : 24;
   const backs = Array.from({ length: count }, (_, i) => i);
+  const from = pos === 'left' ? { x: 90, y: 0 } : pos === 'right' ? { x: -90, y: 0 } : { x: 0, y: 90 };
   return (
-    <div className={`seat ${side ? 'side' : 'top'} ${active ? 'active' : ''}`}>
-      <div className="seat-avatar">
+    <div className={`pseat pos-${pos} ${active ? 'active' : ''}`} style={style}>
+      <div className="pseat-avatar">
         <FramedAvatar index={info.avatar} size={avatarSize} frame={info.frame} />
         {active && <TimerRing deadline={deadline} total={turnMs} size={avatarSize} />}
+        {dealer && (
+          <span className="dealer-puck" title={t('game.dealer')}>
+            D
+          </span>
+        )}
         {!info.connected && (
-          <span style={{ position: 'absolute', bottom: -4, right: -4, background: '#c0392b', borderRadius: 8, padding: 2 }}>
-            <WifiOff size={12} />
+          <span className="offline-dot">
+            <WifiOff size={11} />
           </span>
         )}
         <SpeechBubble bubble={bubble} pos={pos} />
       </div>
-      <div className="seat-meta">
-        <span className="seat-name">
-          {dealer && <Layers size={11} color="var(--gold-2)" style={{ display: 'inline', marginInlineEnd: 3, verticalAlign: '-1px' }} />}
-          {info.name}
-        </span>
-        <span className="seat-sub">
+      <div className="pseat-plate">
+        <span className="pseat-name">{info.name}</span>
+        <span className="pseat-sub">
           <span className="level-badge">{info.level}</span>
           {info.bot && (
             <span className="bot-tag">
-              <Bot size={11} /> {t('common.bot')}
+              <Bot size={10} /> {t('common.bot')}
             </span>
           )}
           {info.auto && !info.bot && <span className="bot-tag auto-tag">AUTO</span>}
@@ -135,8 +143,8 @@ export function SeatView({ info, pos, active, deadline, turnMs, count, back, bub
             back={back}
             width={cw}
             shared={false}
-            initial={dealing ? { opacity: 0, scale: 0.4, y: side ? 0 : 120, x: side ? (pos === 'left' ? 120 : -120) : 0 } : false}
-            animate={{ opacity: 1, scale: 1, x: 0, y: 0, rotate: side ? 90 : 0 }}
+            initial={dealing ? { opacity: 0, scale: 0.4, ...from } : false}
+            animate={{ opacity: 1, scale: 1, x: 0, y: 0, rotate: side ? 90 : (i - (count - 1) / 2) * 7 }}
             transition={{ type: 'spring', stiffness: 380, damping: 30, delay: dealing ? i * 0.06 : 0 }}
           />
         ))}
@@ -154,6 +162,26 @@ export function flyingToTeam(event: GameEvent | null, team: Team): Card[] {
   return [];
 }
 
+/** Épaisseur d'une pile vue en 3D : quelques cartes décalées d'un pixel. */
+function Thickness({ count, back, width }: { count: number; back: string; width: number }) {
+  const layers = Math.min(5, Math.ceil(count / 5));
+  return (
+    <>
+      {Array.from({ length: layers }, (_, i) => (
+        <PlayingCard
+          key={i}
+          faceUp={false}
+          back={back}
+          width={width}
+          shared={false}
+          initial={false}
+          style={{ top: -i * 1.6, left: i * 0.6 }}
+        />
+      ))}
+    </>
+  );
+}
+
 export function PileStack({
   count,
   team,
@@ -161,6 +189,8 @@ export function PileStack({
   back,
   label,
   flying,
+  width,
+  style,
 }: {
   count: number;
   team: Team;
@@ -168,16 +198,15 @@ export function PileStack({
   back: string;
   label: string;
   flying: Card[];
+  width: number;
+  style?: CSSProperties;
 }) {
   return (
-    <div className="col" style={{ gap: 2, alignItems: 'center' }} data-team={team}>
-      <div className={`stack ${cls}`}>
-        {count > 0 && <PlayingCard faceUp={false} back={back} width={34} shared={false} initial={false} />}
-        {count > 3 && (
-          <PlayingCard faceUp={false} back={back} width={34} shared={false} initial={false} style={{ top: -2, left: 2 }} />
-        )}
+    <div className="felt-item" style={style} data-team={team}>
+      <div className={`stack ${cls}`} style={{ width, height: width * 1.5556 }}>
+        {count > 0 ? <Thickness count={count} back={back} width={width} /> : <div className="stack-slot" />}
         {flying.map((c, i) => (
-          <PlayingCard key={c} card={c} width={34} style={{ position: 'absolute', top: -i * 1.5, left: i * 1.5 }} />
+          <PlayingCard key={c} card={c} width={width} style={{ position: 'absolute', top: -i * 1.5, left: i * 1.5 }} />
         ))}
         {count > 0 && <span className="stack-count">{count}</span>}
       </div>
@@ -186,14 +215,23 @@ export function PileStack({
   );
 }
 
-export function DeckStack({ count, back, label }: { count: number; back: string; label: string }) {
+export function DeckStack({
+  count,
+  back,
+  label,
+  width,
+  style,
+}: {
+  count: number;
+  back: string;
+  label: string;
+  width: number;
+  style?: CSSProperties;
+}) {
   return (
-    <div className="col" style={{ gap: 2, alignItems: 'center' }}>
-      <div className="stack">
-        {count > 0 && <PlayingCard faceUp={false} back={back} width={34} shared={false} initial={false} />}
-        {count > 8 && (
-          <PlayingCard faceUp={false} back={back} width={34} shared={false} initial={false} style={{ top: -2, left: -2 }} />
-        )}
+    <div className="felt-item" style={style}>
+      <div className="stack deck" style={{ width, height: width * 1.5556 }}>
+        {count > 0 ? <Thickness count={count} back={back} width={width} /> : <div className="stack-slot" />}
         <span className="stack-count">{count}</span>
       </div>
       <span className="stack-label">{label}</span>
@@ -207,15 +245,17 @@ export function TableCards({
   width,
   targets,
   entry,
+  style,
 }: {
   d: GameDisplay;
   width: number;
   targets: Set<Card>;
   entry: (card: Card) => ReturnType<typeof entryFrom> | false;
+  style?: CSSProperties;
 }) {
   const cards = d.view.table;
   return (
-    <div className="table-cards">
+    <div className="table-cards" style={style}>
       {cards.map((c, i) => {
         const duo = i > 0 && rankIndex(cards[i - 1]) === rankIndex(c);
         return (
@@ -223,8 +263,10 @@ export function TableCards({
             key={c}
             card={c}
             width={width}
-            className={`${targets.has(c) ? 'target' : ''} ${duo ? 'duo' : ''}`}
+            className={`on-felt ${targets.has(c) ? 'target' : ''} ${duo ? 'duo' : ''}`}
             initial={entry(c)}
+            flipIn={entry(c) ? 0.05 : false}
+            back={d.cardBack}
           />
         );
       })}

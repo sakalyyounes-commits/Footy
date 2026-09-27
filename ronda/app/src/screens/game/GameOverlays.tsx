@@ -127,7 +127,7 @@ export function Floaters({
             exit={{ opacity: 0, y: -60 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
           >
-            +{f.points}
+            <span className="float-chip">+{f.points}</span>
             <small>{t(`reason.${f.reason}` as TranslationKey)}</small>
           </motion.div>
         );

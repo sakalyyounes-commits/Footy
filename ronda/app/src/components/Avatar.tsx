@@ -150,7 +150,7 @@ export const Avatar = memo(function Avatar({ index, size = 48 }: { index: number
 });
 
 const FRAME_STYLES: Record<string, { ring: string; glow?: string }> = {
-  'frame-none': { ring: 'rgba(242,199,92,.55)' },
+  'frame-none': { ring: 'linear-gradient(150deg,#fff3b0 0%,#e7ad2c 35%,#8a5a00 65%,#ffd96b 100%)' },
   'frame-bronze': { ring: 'linear-gradient(135deg,#f0b27a,#a0522d,#e59866)' },
   'frame-argent': { ring: 'linear-gradient(135deg,#ffffff,#9aa5b1,#e5e8e8)' },
   'frame-or': { ring: 'linear-gradient(135deg,#fff0b8,#e8b84a,#b8861d,#fff0b8)', glow: '0 0 12px rgba(242,199,92,.7)' },
@@ -160,7 +160,8 @@ const FRAME_STYLES: Record<string, { ring: string; glow?: string }> = {
 /** Avatar dans son cadre (bronze, argent, or, VIP). */
 export function FramedAvatar({ index, size = 48, frame = 'frame-none' }: { index: number; size?: number; frame?: string }) {
   const f = FRAME_STYLES[frame] ?? FRAME_STYLES['frame-none'];
-  const pad = frame === 'frame-none' ? 2 : 3.5;
+  // Anneau métallique épais, comme les portraits des tables de poker.
+  const pad = Math.max(2.5, Math.round(size * 0.07 * 10) / 10);
   return (
     <div
       style={{
@@ -169,11 +170,11 @@ export function FramedAvatar({ index, size = 48, frame = 'frame-none' }: { index
         borderRadius: '50%',
         padding: pad,
         background: f.ring,
-        boxShadow: f.glow ?? '0 2px 6px rgba(0,0,0,.4)',
+        boxShadow: `${f.glow ? `${f.glow}, ` : ''}0 2px 0 rgba(0,0,0,.35), 0 4px 7px rgba(0,0,0,.35)`,
         flex: 'none',
       }}
     >
-      <div style={{ borderRadius: '50%', overflow: 'hidden', width: '100%', height: '100%' }}>
+      <div style={{ borderRadius: '50%', overflow: 'hidden', width: '100%', height: '100%', boxShadow: 'inset 0 0 0 1.5px rgba(0,0,0,.45)' }}>
         <Avatar index={index} size={size - pad * 2} />
       </div>
     </div>

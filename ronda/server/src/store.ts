@@ -372,7 +372,14 @@ export class SqliteStore implements Store {
 export function openStore(dataDir: string, kind = process.env.STORE ?? 'sqlite'): Store {
   if (!dataDir || kind === 'json') return new JsonStore(dataDir);
   mkdirSync(dataDir, { recursive: true });
-  const store = new SqliteStore(join(dataDir, 'ronda.db'));
+  let store: SqliteStore;
+  try {
+    store = new SqliteStore(join(dataDir, 'ronda.db'));
+  } catch (err) {
+    // Node.js trop ancien (SQLite intégré depuis la version 22.5) : simple fichier JSON.
+    console.warn('[store] SQLite indisponible, profils enregistrés dans profiles.json :', (err as Error).message);
+    return new JsonStore(dataDir);
+  }
   const imported = store.importJson(join(dataDir, 'profiles.json'));
   if (imported) console.log(`[store] ${imported} profils importés depuis profiles.json`);
   return store;

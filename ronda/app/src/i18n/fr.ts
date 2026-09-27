@@ -39,6 +39,10 @@ export const fr = {
   'home.ranking': 'Classement',
   'home.rules': 'Règles',
   'home.free_coins': 'Gratuit',
+  'home.promo_daily': 'Ton bonus du jour t’attend !',
+  'home.promo_daily_sub': 'Jusqu’à 5 000 pièces offertes',
+  'home.promo_invite': 'Invite tes amis',
+  'home.promo_invite_sub': '+{n} pièces chacun avec ton code',
 
   'mode.1v1': '1 contre 1',
   'mode.2v2': '2 contre 2',
@@ -81,6 +85,7 @@ export const fr = {
 
   'room.title': 'Ta table',
   'room.code': 'Code',
+  'room.scan': 'Scanne pour rejoindre',
   'room.share_text': 'Rejoins ma table de Ronda Dyalna ! 🃏 Code : {code}',
   'room.invite': 'Inviter',
   'room.whatsapp': 'WhatsApp',
@@ -154,6 +159,7 @@ export const fr = {
   'game.pile': 'Ramassées',
   'game.drop': 'Pose',
   'game.hint': 'Conseil',
+  'game.dealer': 'Donneur',
   'game.emotes': 'Messages',
   'game.opponent_left': 'Adversaire parti',
   'game.pending': 'Paquet en jeu',

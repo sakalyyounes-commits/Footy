@@ -5,6 +5,8 @@ import { extname, join, normalize, resolve, sep } from 'node:path';
 import { WebSocketServer } from 'ws';
 import type { ServerConfig } from './config';
 import { Hub } from './hub';
+import { lanUrls } from './network';
+import { partyPage } from './party';
 import { openStore, type Store } from './store';
 
 const MIME: Record<string, string> = {
@@ -30,7 +32,8 @@ export interface GameServer {
   http: Server;
   hub: Hub;
   store: Store;
-  listen(): Promise<number>;
+  /** Démarre l'écoute (port de la configuration par défaut) ; échoue si le port est pris. */
+  listen(port?: number): Promise<number>;
   close(): Promise<void>;
 }
 
@@ -138,7 +141,14 @@ export function createGameServer(config: ServerConfig, store: Store = openStore(
       res.end('ok');
       return;
     }
-    if (path === '/api/status') return json(res, 200, hub.status());
+    if (path === '/api/status') {
+      return json(res, 200, config.localParty ? { ...hub.status(), lan: lanUrls(currentPort()) } : hub.status());
+    }
+    if (path === '/soiree' && config.localParty) {
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+      res.end(partyPage(lanUrls(currentPort()), `http://localhost:${currentPort()}`));
+      return;
+    }
     if (path === '/api/leaderboard') return json(res, 200, hub.leaderboard());
     if (path === '/webhooks/revenuecat' && req.method === 'POST') {
       const auth = req.headers.authorization ?? '';
@@ -184,6 +194,8 @@ export function createGameServer(config: ServerConfig, store: Store = openStore(
     res.end('Not found');
   }
 
+  const currentPort = () => (http.address() as AddressInfo | null)?.port ?? config.port;
+
   const http = createServer((req, res) => {
     handle(req, res).catch((err) => {
       console.error('[http]', err);
@@ -211,9 +223,19 @@ export function createGameServer(config: ServerConfig, store: Store = openStore(
     http,
     hub,
     store,
-    listen: () =>
-      new Promise((resolveListen) => {
-        http.listen(config.port, config.host, () => resolveListen((http.address() as AddressInfo).port));
+    listen: (port = config.port) =>
+      new Promise((resolveListen, rejectListen) => {
+        const onError = (err: Error) => {
+          http.off('listening', onListening);
+          rejectListen(err);
+        };
+        const onListening = () => {
+          http.off('error', onError);
+          resolveListen((http.address() as AddressInfo).port);
+        };
+        http.once('error', onError);
+        http.once('listening', onListening);
+        http.listen(port, config.host);
       }),
     close: () =>
       new Promise((resolveClose) => {

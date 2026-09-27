@@ -23,6 +23,7 @@ import {
   TableCards,
   TimerRing,
 } from './GameParts';
+import { TableScene, type TableGeometry } from './Table3D';
 import { BannerView, EmotePicker, Floaters, LeaveModal, ResultModal, RoundSummaryModal } from './GameOverlays';
 import { PlayingCard } from './PlayingCard';
 
@@ -34,6 +35,16 @@ function useViewport() {
     return () => window.removeEventListener('resize', on);
   }, []);
   return size;
+}
+
+/** Zone des cartes posées : le centre du tapis, sans les cartes cachées des places latérales. */
+function cardsArea(g: TableGeometry, sides: boolean, topSeat: boolean) {
+  const b = g.cardsBox;
+  const inset = sides ? 44 : 14;
+  // Sous la place du joueur d'en face (avatar puis plaque : ~76 px).
+  const top = Math.max(b.y + 30, topSeat ? g.seats.top.y + 78 : 0);
+  const bottom = b.y + b.h;
+  return { x: b.x + inset, y: top, w: Math.max(80, b.w - inset * 2), h: Math.max(90, bottom - top) };
 }
 
 export function GameScreen() {
@@ -70,13 +81,9 @@ function GameView({ game }: { game: GameController }) {
   const dealing = d.lastEvent?.type === 'deal';
   const bubbleOf = (seat: Seat) => d.bubbles.filter((b) => b.seat === seat).at(-1);
 
-  // Tailles de cartes adaptées à l'écran.
+  // Tailles de cartes adaptées à l'écran : la main en bas, la table 3D prend tout le reste.
   const contentW = Math.min(w, 560) - 16;
-  const handW = Math.max(60, Math.min(88, (contentW - 30) / 4.3, (h - 560) / 1.25 + 62));
-  const sideW = players === 4 ? 54 : 0;
-  const perRow = players === 4 ? 4 : 5;
-  const feltInner = contentW - sideW * 2 - 8 - 32;
-  const tableW = Math.max(40, Math.min(66, (feltInner - (perRow - 1) * 8) / perRow, (h - 440) / 4 + 34));
+  const handW = Math.max(58, Math.min(86, (contentW - 30) / 4.3, (h - 560) / 1.25 + 60));
 
   // La sélection disparaît quand la carte n'est plus en main.
   useEffect(() => {
@@ -212,47 +219,40 @@ function GameView({ game }: { game: GameController }) {
           )}
         </div>
 
-        {/* Milieu : partenaire / adversaire en haut, places latérales, tapis */}
-        <div className="middle">
-          <div>
-            {topSeat && (
-              <SeatView
-                info={topSeat}
-                pos="top"
-                active={turnShown && v.turn === topSeat.seat && v.phase === 'play'}
-                deadline={d.deadline}
-                turnMs={d.turnMs}
-                count={v.handCounts[topSeat.seat] ?? 0}
-                back={d.cardBack}
-                bubble={bubbleOf(topSeat.seat)}
-                dealing={dealing}
-                dealer={v.dealer === topSeat.seat}
-              />
-            )}
-          </div>
-          <div className="middle-row">
-            {leftSeat ? (
-              <SeatView
-                info={leftSeat}
-                pos="left"
-                active={turnShown && v.turn === leftSeat.seat && v.phase === 'play'}
-                deadline={d.deadline}
-                turnMs={d.turnMs}
-                count={v.handCounts[leftSeat.seat] ?? 0}
-                back={d.cardBack}
-                bubble={bubbleOf(leftSeat.seat)}
-                dealing={dealing}
-                dealer={v.dealer === leftSeat.seat}
-              />
-            ) : (
-              <span />
-            )}
-            <div className="felt">
-              {v.table.length === 0 && !pending && <div className="felt-empty">روندا</div>}
-              <div className="corner tl">
-                <DeckStack count={v.deckCount} back={d.cardBack} label={t('game.deck')} />
-              </div>
-              <div className="corner tr">
+        {/* Table de poker en 3D : places sur le bourrelet, talon, tas et cartes sur le tapis */}
+        <TableScene margins={{ top: 40, bottom: 4, side: players === 4 ? 24 : 6 }}>
+          {(g) => {
+            const box = cardsArea(g, players === 4, topSeat !== undefined);
+            const perRow = box.w > 300 ? 5 : 4;
+            const tableW = Math.max(38, Math.min(64, (box.w - (perRow - 1) * 8) / perRow, (box.h - 10) / 2 / 1.5556));
+            const stackW = Math.round(Math.max(26, Math.min(36, tableW * 0.62)));
+            // Talon et tas dans les coins du tapis, loin des places latérales même sur une table courte.
+            const farV = g.length - 0.32;
+            const seatProps = (seat: typeof topSeat) =>
+              seat && {
+                info: seat,
+                active: turnShown && v.turn === seat.seat && v.phase === 'play',
+                deadline: d.deadline,
+                turnMs: d.turnMs,
+                count: v.handCounts[seat.seat] ?? 0,
+                back: d.cardBack,
+                bubble: bubbleOf(seat.seat),
+                dealing,
+                dealer: v.dealer === seat.seat,
+              };
+            const place = (p: { x: number; y: number }) => ({ left: p.x, top: p.y });
+            const topP = seatProps(topSeat);
+            const leftP = seatProps(leftSeat);
+            const rightP = seatProps(rightSeat);
+            return (
+              <>
+                <DeckStack
+                  count={v.deckCount}
+                  back={d.cardBack}
+                  label={t('game.deck')}
+                  width={stackW}
+                  style={place(g.at(-0.26, farV))}
+                />
                 <PileStack
                   count={v.pileCounts[1 - myTeam]}
                   team={(1 - myTeam) as 0 | 1}
@@ -260,9 +260,9 @@ function GameView({ game }: { game: GameController }) {
                   back={d.cardBack}
                   label={labels[1]}
                   flying={flyingToTeam(d.lastEvent, (1 - myTeam) as 0 | 1)}
+                  width={stackW}
+                  style={place(g.at(0.26, farV))}
                 />
-              </div>
-              <div className="corner bl">
                 <PileStack
                   count={v.pileCounts[myTeam]}
                   team={myTeam}
@@ -270,65 +270,62 @@ function GameView({ game }: { game: GameController }) {
                   back={d.cardBack}
                   label={labels[0]}
                   flying={flyingToTeam(d.lastEvent, myTeam)}
+                  width={stackW}
+                  style={place(g.at(-0.17, 0.27))}
                 />
-              </div>
-              {pending && (
-                <div className="pending-zone">
-                  <div className="pending-cards">
-                    {pending.cards.map((c) => (
-                      <PlayingCard
-                        key={c}
-                        card={c}
-                        width={tableW * 0.78}
-                        className={preview?.zid ? 'target' : ''}
-                        initial={entry(c)}
-                      />
-                    ))}
+                {pending && (
+                  <div className="pending-zone" style={place(g.at(0.17, 0.27))}>
+                    <div className="pending-cards">
+                      {pending.cards.map((c) => (
+                        <PlayingCard
+                          key={c}
+                          card={c}
+                          width={tableW * 0.72}
+                          className={`on-felt ${preview?.zid ? 'target' : ''}`}
+                          initial={entry(c)}
+                        />
+                      ))}
+                    </div>
+                    <span className="pending-tag">
+                      {t(`game.darba${pending.level}` as TranslationKey)} · {d.seats[pending.owner]?.name}
+                    </span>
                   </div>
-                  <span className="pending-tag">
-                    {t(`game.darba${pending.level}` as TranslationKey)} · {d.seats[pending.owner]?.name}
-                  </span>
-                </div>
-              )}
-              <TableCards d={d} width={tableW} targets={targets} entry={entry} />
-            </div>
-            {rightSeat ? (
-              <SeatView
-                info={rightSeat}
-                pos="right"
-                active={turnShown && v.turn === rightSeat.seat && v.phase === 'play'}
-                deadline={d.deadline}
-                turnMs={d.turnMs}
-                count={v.handCounts[rightSeat.seat] ?? 0}
-                back={d.cardBack}
-                bubble={bubbleOf(rightSeat.seat)}
-                dealing={dealing}
-                dealer={v.dealer === rightSeat.seat}
-              />
-            ) : (
-              <span />
-            )}
-          </div>
-        </div>
+                )}
+                <TableCards
+                  d={d}
+                  width={tableW}
+                  targets={targets}
+                  entry={entry}
+                  style={{ left: box.x, top: box.y, width: box.w, height: box.h }}
+                />
+                {topP && <SeatView {...topP} pos="top" style={place(g.seats.top)} />}
+                {leftP && <SeatView {...leftP} pos="left" style={place(g.seats.left)} />}
+                {rightP && <SeatView {...rightP} pos="right" style={place(g.seats.right)} />}
+              </>
+            );
+          }}
+        </TableScene>
 
         {/* Bas : ma place et ma main */}
         <div className="bottom">
           <div className="my-bar">
             <div className={`seat ${myTurn ? 'active' : ''}`}>
               <div className="seat-avatar">
-                {mySeat && <FramedAvatar index={mySeat.avatar} size={40} frame={mySeat.frame} />}
-                {myTurn && <TimerRing deadline={d.deadline} total={d.turnMs} size={40} />}
+                {mySeat && <FramedAvatar index={mySeat.avatar} size={44} frame={mySeat.frame} />}
+                {myTurn && <TimerRing deadline={d.deadline} total={d.turnMs} size={44} />}
                 <SpeechBubble bubble={bubbleOf(me)} pos="bottom" />
               </div>
             </div>
             <div className={`turn-hint ${myTurn ? 'mine' : 'muted'}`}>
-              {v.phase !== 'play' || !turnShown
-                ? ''
-                : myTurn
-                  ? selected !== null && confirmPlay && canPlay
-                    ? t('game.tap_again')
-                    : t('game.your_turn')
-                  : t('game.turn_of', { name: activeName })}
+              <span>
+                {v.phase !== 'play' || !turnShown
+                  ? ''
+                  : myTurn
+                    ? selected !== null && confirmPlay && canPlay
+                      ? t('game.tap_again')
+                      : t('game.your_turn')
+                    : t('game.turn_of', { name: activeName })}
+              </span>
             </div>
             {game instanceof LocalController ? (
               <button
@@ -372,6 +369,8 @@ function GameView({ game }: { game: GameController }) {
                     width={handW}
                     className={`${lifted ? 'glow' : ''} ${!myTurn ? 'dim' : ''}`}
                     initial={dealing ? { y: -320, opacity: 0, scale: 0.5, rotate: 20 } : false}
+                    flipIn={dealing ? 0.3 + i * 0.08 : false}
+                    back={d.cardBack}
                     animate={{
                       opacity: d.pendingPlay === c ? 0.7 : 1,
                       x: 0,

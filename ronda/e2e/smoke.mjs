@@ -10,12 +10,15 @@ import { chromium } from 'playwright';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.E2E_PORT ?? 8765);
-const base = `http://127.0.0.1:${port}`;
+// E2E_HOST=<adresse IP du réseau local> : joue comme des téléphones sur le Wi-Fi (http simple,
+// contexte « non sécurisé » pour le navigateur : ni presse-papiers, ni partage, ni service worker).
+const host = process.env.E2E_HOST ?? '127.0.0.1';
+const base = `http://${host}:${port}`;
 const dataDir = mkdtempSync(join(tmpdir(), 'ronda-e2e-'));
 const errors = [];
 
 const server = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', join(root, 'server/dist/server.js')], {
-  env: { ...process.env, PORT: String(port), HOST: '127.0.0.1', DATA_DIR: dataDir, STATIC_DIR: join(root, 'app/dist'), BOT_FILL_MS: '1500', ANIMATION_SCALE: '0.3' },
+  env: { ...process.env, PORT: String(port), HOST: host === '127.0.0.1' ? host : '0.0.0.0', DATA_DIR: dataDir, STATIC_DIR: join(root, 'app/dist'), BOT_FILL_MS: '1500', ANIMATION_SCALE: '0.3' },
   stdio: ['ignore', 'inherit', 'inherit'],
 });
 
@@ -80,7 +83,8 @@ async function step(name, fn) {
 let browser;
 try {
   await waitForServer();
-  browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
+  // Serveur local : jamais de proxy (certains environnements en imposent un pour Internet).
+  browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-proxy-server'] });
 
   await step('hors ligne : une partie démarre et le joueur joue une carte', async () => {
     const page = await newPage(browser, settings('Solo'));

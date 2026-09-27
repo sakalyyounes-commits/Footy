@@ -180,7 +180,7 @@ export const CardFace = memo(function CardFace({ card }: { card: Card }) {
   const ink = SUIT_INK[suit];
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="card-svg" aria-label={`${rank} ${suit}`} role="img">
-      <rect x="1" y="1" width={W - 2} height={H - 2} rx="14" fill="url(#g-card)" stroke="#cdb88a" strokeWidth="2" />
+      <rect x="1" y="1" width={W - 2} height={H - 2} rx="14" fill="url(#g-card)" stroke="#c9c2b0" strokeWidth="2" />
       <Frame suit={suit} />
       {rank >= 10 ? (
         <Figure suit={suit} rank={rank as 10 | 11 | 12} />
@@ -200,7 +200,7 @@ export interface BackStyle {
 }
 
 export const BACKS: Record<string, BackStyle> = {
-  'back-zellige': { pattern: 'p-back-zellige', frame: '#e8b84a', medallion: '#0a3d2f', accent: '#f2c75c' },
+  'back-zellige': { pattern: 'p-back-zellige', frame: '#f5c542', medallion: '#6e0710', accent: '#ffe08a' },
   'back-majorelle': { pattern: 'p-back-majorelle', frame: '#f4d03f', medallion: '#18248a', accent: '#f4d03f' },
   'back-berbere': { pattern: 'p-back-berbere', frame: '#f3e3c3', medallion: '#1d140a', accent: '#e8b84a' },
   'back-chaouen': { pattern: 'p-back-chaouen', frame: '#ffffff', medallion: '#2f6db3', accent: '#eef6ff' },
@@ -213,7 +213,7 @@ export const CardBack = memo(function CardBack({ back = 'back-zellige' }: { back
   const b = BACKS[back] ?? BACKS['back-zellige'];
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="card-svg" aria-hidden="true">
-      <rect x="1" y="1" width={W - 2} height={H - 2} rx="14" fill="#f7ecd2" stroke="#cdb88a" strokeWidth="2" />
+      <rect x="1" y="1" width={W - 2} height={H - 2} rx="14" fill="#fdfbf6" stroke="#c9c2b0" strokeWidth="2" />
       <rect x="9" y="9" width={W - 18} height={H - 18} rx="9" fill={`url(#${b.pattern})`} stroke={b.frame} strokeWidth="3.5" />
       <rect x="17" y="17" width={W - 34} height={H - 34} rx="6" fill="none" stroke={b.accent} strokeWidth="1.4" opacity="0.7" />
       <circle cx={W / 2} cy={H / 2} r="36" fill={b.medallion} stroke={b.frame} strokeWidth="3.5" />

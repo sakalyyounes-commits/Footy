@@ -139,12 +139,15 @@ function BackPatterns() {
   return (
     <>
       {/* Zellige vert : étoiles à 8 branches blanches et bleues. */}
-      <pattern id="p-back-zellige" width="36" height="36" patternUnits="userSpaceOnUse">
-        <rect width="36" height="36" fill="#0b5d45" />
-        <polygon points={starPoints(18, 18, 15, 10.5)} fill="#f6f0e1" />
-        <polygon points={starPoints(18, 18, 10, 6.5)} fill="#1d4f91" />
-        <circle cx="18" cy="18" r="2.6" fill="#e8b84a" />
-        <path d="M0 0 L5 0 L0 5 Z M36 0 L31 0 L36 5 Z M0 36 L5 36 L0 31 Z M36 36 L31 36 L36 31 Z" fill="#e8b84a" />
+      <pattern id="p-back-zellige" width="30" height="30" patternUnits="userSpaceOnUse">
+        <rect width="30" height="30" fill="#b3121f" />
+        <path d="M15 0 L30 15 L15 30 L0 15 Z" fill="#8f0d18" />
+        <polygon points={starPoints(15, 15, 10.5, 7)} fill="none" stroke="#f5c542" strokeWidth="1.3" />
+        <circle cx="15" cy="15" r="2.4" fill="#f5c542" />
+        <circle cx="0" cy="0" r="2" fill="#f5c542" />
+        <circle cx="30" cy="0" r="2" fill="#f5c542" />
+        <circle cx="0" cy="30" r="2" fill="#f5c542" />
+        <circle cx="30" cy="30" r="2" fill="#f5c542" />
       </pattern>
       {/* Majorelle : bleu profond et jaune citron. */}
       <pattern id="p-back-majorelle" width="30" height="30" patternUnits="userSpaceOnUse">
@@ -201,8 +204,9 @@ export function CardDefs() {
     <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id="g-card" x1="0" y1="0" x2="0.3" y2="1">
-          <stop offset="0" stopColor="#fffbf1" />
-          <stop offset="1" stopColor="#f4e6c8" />
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="0.7" stopColor="#fbf8f1" />
+          <stop offset="1" stopColor="#efe8d8" />
         </linearGradient>
         <linearGradient id="g-gold" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#fff0b8" />

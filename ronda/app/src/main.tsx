@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import '@fontsource-variable/cairo/wght.css';
 import '@fontsource-variable/el-messiri/wght.css';
 import '@fontsource/aref-ruqaa/arabic-700.css';
+import '@fontsource/lilita-one/400.css';
 import './styles/global.css';
 import './styles/screens.css';
 import './styles/game.css';

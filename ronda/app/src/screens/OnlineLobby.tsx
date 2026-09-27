@@ -9,15 +9,26 @@ import { useSession } from '../store/session';
 import { useSettings } from '../store/settings';
 import { toast } from '../store/toast';
 
-const CITY_COLORS: Record<string, string> = {
-  tanja: 'linear-gradient(135deg,#1f8a66,#0a4a37)',
-  fes: 'linear-gradient(135deg,#1d4f91,#0f2a52)',
-  chaouen: 'linear-gradient(135deg,#5b9bd5,#2f6db3)',
-  souira: 'linear-gradient(135deg,#2436b8,#121a63)',
-  casa: 'linear-gradient(135deg,#34495e,#0c1726)',
-  marrakech: 'linear-gradient(135deg,#c9803a,#7d1a12)',
-  rabat: 'linear-gradient(135deg,#9b2318,#3f0c07)',
+/** Couleur du feutre de chaque table (du vert de Tanger au rouge du palais de Rabat). */
+const CITY_FELTS: Record<string, [string, string]> = {
+  tanja: ['#3fd07f', '#0f6a34'],
+  fes: ['#5d9bff', '#173f9e'],
+  chaouen: ['#7cc4ff', '#1f5d98'],
+  souira: ['#4fd1c5', '#0f5c63'],
+  casa: ['#9a6bff', '#2f1780'],
+  marrakech: ['#f0a94b', '#8a3f0c'],
+  rabat: ['#ff6a5a', '#7a0d09'],
 };
+
+function CityTable({ id, label }: { id: string; label: string }) {
+  const [a, b] = CITY_FELTS[id] ?? CITY_FELTS.tanja;
+  return (
+    <div className="city-table" style={{ ['--felt-a' as string]: a, ['--felt-b' as string]: b }}>
+      <div className="ct-top" />
+      <span className="ct-name">{label}</span>
+    </div>
+  );
+}
 
 export function OnlineLobby() {
   const t = useT();
@@ -68,9 +79,7 @@ export function OnlineLobby() {
               transition={{ delay: i * 0.04 }}
               onClick={() => join(table.id, table.entry, table.minLevel)}
             >
-              <div className="city-badge" style={{ background: CITY_COLORS[table.id] }}>
-                {table.cityAr.slice(0, 3)}
-              </div>
+              <CityTable id={table.id} label={table.cityAr} />
               <div style={{ flex: 1, textAlign: 'start' }}>
                 <div className="city-name">{lang === 'ar' ? table.cityAr : table.city}</div>
                 <div className="city-meta">
