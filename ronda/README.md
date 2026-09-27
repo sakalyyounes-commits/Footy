@@ -5,6 +5,9 @@ Le jeu de cartes marocain **Ronda** en ligne, sur **Android**, **iPhone** et **n
 Pensé comme les grands jeux « à tables » (Parchisi Star, Ludo King) : pièces virtuelles, tables
 à mise de Tanger à Rabat, bonus quotidien, niveaux, boutique, classement.
 
+> 🚀 **Débutant ? Commence par le [guide pas à pas](GUIDE.md)** : jouer ce soir entre amis sur le
+> Wi-Fi, installer l'APK Android, mettre le jeu en ligne — avec les liens de téléchargement directs.
+
 > Nom de travail : « Ronda Dyalna » (*notre Ronda*). Il se change en un seul endroit par plate-forme
 > (voir [Personnaliser](#personnaliser)).
 

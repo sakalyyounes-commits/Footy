@@ -8,6 +8,7 @@
 
 > 🃏 **Nouveau dans ce dépôt : [Ronda Dyalna](ronda/README.md)**, le jeu de cartes marocain Ronda en ligne
 > (Android, iPhone, web) — dossier [`ronda/`](ronda/), indépendant de Hayati.
+> Pour jouer tout de suite : **[guide pas à pas](ronda/GUIDE.md)**.
 
 ## Les modules
 

@@ -19,7 +19,8 @@
     "typecheck": "tsc -p core --noEmit && tsc -p server --noEmit && tsc -p app --noEmit",
     "build": "npm run typecheck && npm run build -w @ronda/app && npm run build -w @ronda/server",
     "start": "npm run start -w @ronda/server",
-    "e2e": "node e2e/smoke.mjs"
+    "e2e": "node e2e/smoke.mjs",
+    "package:soiree": "node scripts/package-soiree.mjs"
   },
   "devDependencies": {
     "playwright": "^1.63.0",

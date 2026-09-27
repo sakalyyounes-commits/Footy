@@ -99,6 +99,41 @@ jobs:
           path: ronda/app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
+  release:
+    name: Liens de téléchargement (Release GitHub)
+    needs: [test, android]
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/claude/sharp-euler-el6hsz' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ronda/package-lock.json
+      - run: npm ci
+      - name: Paquet « soirée entre amis »
+        run: npm run build -w @ronda/app && npm run build -w @ronda/server && npm run package:soiree
+      - uses: actions/download-artifact@v4
+        with:
+          name: ronda-dyalna-debug-apk
+          path: ronda/dist/apk
+      - name: Publication sous le tag ronda-latest (liens fixes)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cp dist/apk/app-debug.apk dist/soiree/Ronda-Dyalna.apk
+          gh release delete ronda-latest --cleanup-tag --yes || true
+          gh release create ronda-latest \
+            --target "$GITHUB_SHA" \
+            --title "Ronda Dyalna — version de test" \
+            --notes-file docs/RELEASE_NOTES.md \
+            --latest \
+            dist/soiree/Ronda-Soiree.zip dist/soiree/Ronda-Dyalna.apk
+
   docker:
     name: Image Docker du serveur
     needs: test

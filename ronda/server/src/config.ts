@@ -1,3 +1,7 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 export interface ServerConfig {
   port: number;
   host: string;
@@ -37,17 +41,42 @@ export interface ServerConfig {
   localParty: boolean;
 }
 
+type EnvKey = 'LOCAL_PARTY' | 'STATIC_DIR' | 'DATA_DIR' | 'PORT';
+
+/**
+ * Paquet « soirée entre amis » : un fichier ronda-soiree.json posé à côté de server.js suffit à
+ * activer le mode soirée et à servir le dossier web voisin, sans aucune variable à régler
+ * (on lance simplement « node server.js »). Les variables d'environnement restent prioritaires.
+ */
+function partyPackageDefaults(): Partial<Record<EnvKey, string>> {
+  try {
+    const dir = dirname(fileURLToPath(import.meta.url));
+    const file = join(dir, 'ronda-soiree.json');
+    if (!existsSync(file)) return {};
+    const cfg = JSON.parse(readFileSync(file, 'utf8')) as { port?: number };
+    return {
+      LOCAL_PARTY: '1',
+      STATIC_DIR: join(dir, 'web'),
+      DATA_DIR: join(dir, 'donnees'),
+      ...(cfg.port ? { PORT: String(cfg.port) } : {}),
+    };
+  } catch {
+    return {};
+  }
+}
+
 function num(value: string | undefined, fallback: number): number {
   const n = Number(value);
   return value !== undefined && value !== '' && Number.isFinite(n) ? n : fallback;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
+  const party = partyPackageDefaults();
   return {
-    port: num(env.PORT, 8080),
+    port: num(env.PORT ?? party.PORT, 8080),
     host: env.HOST ?? '0.0.0.0',
-    dataDir: env.DATA_DIR ?? './data',
-    staticDir: env.STATIC_DIR ?? '',
+    dataDir: env.DATA_DIR ?? party.DATA_DIR ?? './data',
+    staticDir: env.STATIC_DIR ?? party.STATIC_DIR ?? '',
     turnMs: num(env.TURN_MS, 20_000),
     botDelayMs: [num(env.BOT_DELAY_MIN_MS, 700), num(env.BOT_DELAY_MAX_MS, 1_500)],
     roundPauseMs: num(env.ROUND_PAUSE_MS, 4_500),
@@ -61,7 +90,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     playStoreUrl: env.PLAY_STORE_URL ?? '',
     appStoreUrl: env.APP_STORE_URL ?? '',
     appScheme: env.APP_SCHEME ?? 'rondadyalna',
-    localParty: env.LOCAL_PARTY === '1',
+    localParty: (env.LOCAL_PARTY ?? party.LOCAL_PARTY) === '1',
   };
 }
 
