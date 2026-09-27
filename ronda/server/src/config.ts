@@ -17,6 +17,10 @@ export interface ServerConfig {
   botFillMs: number;
   /** Nombre de tours passés à l'expiration du temps avant de laisser le bot jouer d'office. */
   maxTimeouts: number;
+  /** Nouveaux comptes autorisés par heure et par adresse IP (0 = illimité). */
+  accountsPerIpPerHour: number;
+  /** Faire confiance à l'en-tête X-Forwarded-For (serveur derrière Render, Fly.io, un proxy…). */
+  trustProxy: boolean;
   /** Secret partagé avec RevenueCat pour créditer les achats (vide : webhook désactivé). */
   revenueCatSecret: string;
   /** Adresse publique du jeu (liens d'invitation). */
@@ -45,6 +49,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     animationScale: num(env.ANIMATION_SCALE, 1),
     botFillMs: num(env.BOT_FILL_MS, 12_000),
     maxTimeouts: num(env.MAX_TIMEOUTS, 2),
+    accountsPerIpPerHour: num(env.ACCOUNTS_PER_IP_PER_HOUR, 30),
+    trustProxy: env.TRUST_PROXY !== 'false',
     revenueCatSecret: env.REVENUECAT_WEBHOOK_SECRET ?? '',
     publicUrl: env.PUBLIC_URL ?? '',
     playStoreUrl: env.PLAY_STORE_URL ?? '',
@@ -66,6 +72,8 @@ export function testConfig(overrides: Partial<ServerConfig> = {}): ServerConfig 
     animationScale: 0,
     botFillMs: 300,
     maxTimeouts: 2,
+    accountsPerIpPerHour: 30,
+    trustProxy: false,
     revenueCatSecret: 'test-secret',
     publicUrl: 'http://localhost',
     playStoreUrl: '',

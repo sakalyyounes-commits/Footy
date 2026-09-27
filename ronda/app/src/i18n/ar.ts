@@ -154,6 +154,8 @@ export const ar: Dictionary = {
   'game.forfeit': 'الطرح تخلى',
   'game.target': 'فـ{n}',
   'game.pile': 'المجموع',
+  'game.drop': 'حطها',
+  'game.hint': 'نصيحة',
   'game.emotes': 'رسائل',
   'game.opponent_left': 'الخصم خرج',
   'game.pending': 'الباكية فاللعب',

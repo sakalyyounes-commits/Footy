@@ -1,5 +1,5 @@
 import { LayoutGroup, motion } from 'motion/react';
-import { LogOut, MessageCircle, WifiOff } from 'lucide-react';
+import { Lightbulb, LogOut, MessageCircle, WifiOff } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { capturePreview, teamOf, type Card, type Seat } from '@ronda/core';
 import { sfx } from '../../audio/audio';
@@ -330,7 +330,25 @@ function GameView({ game }: { game: GameController }) {
                     : t('game.your_turn')
                   : t('game.turn_of', { name: activeName })}
             </div>
-            <div style={{ width: 40 }} />
+            {game instanceof LocalController ? (
+              <button
+                className="icon-btn"
+                aria-label={t('game.hint')}
+                disabled={!canPlay}
+                style={{ opacity: canPlay ? 1 : 0.4 }}
+                onClick={() => {
+                  const card = game.hint();
+                  if (card !== null) {
+                    sfx('tap');
+                    setSelected(card);
+                  }
+                }}
+              >
+                <Lightbulb size={20} />
+              </button>
+            ) : (
+              <div style={{ width: 40 }} />
+            )}
           </div>
           <div className="hand" style={{ height: handW * 1.5556 + 24 }}>
             {v.hand.map((c, i) => {
@@ -345,7 +363,7 @@ function GameView({ game }: { game: GameController }) {
                         ? t(`game.darba${preview.darba}` as TranslationKey)
                         : preview.captures.length
                           ? t('game.takes', { n: preview.captures.length })
-                          : '—'}
+                          : t('game.drop')}
                       {preview.missa ? ` + ${t('reason.missa')}` : ''}
                     </div>
                   )}

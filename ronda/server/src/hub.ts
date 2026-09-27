@@ -37,6 +37,7 @@ import { Wallet } from './wallet';
 
 interface Client {
   ws: WebSocket;
+  ip: string;
   profileId: string | null;
   alive: boolean;
   tokens: number;
@@ -78,6 +79,8 @@ export class Hub {
   private readonly roomOf = new Map<string, Room>();
   private readonly queues = new Map<string, QueueEntry[]>();
   private readonly queueOf = new Map<string, string>();
+  /** Créations de comptes récentes par adresse IP (limite anti-abus). */
+  private readonly creations = new Map<string, number[]>();
   /** Joueurs déconnectés qui gardent leur place dans un salon : date de déconnexion. */
   private readonly roomGrace = new Map<string, number>();
   private readonly wallet: Wallet;
@@ -97,8 +100,8 @@ export class Hub {
   // Connexions
   // -------------------------------------------------------------------------------------------
 
-  attach(ws: WebSocket): void {
-    const client: Client = { ws, profileId: null, alive: true, tokens: RATE_BURST, lastRefill: Date.now() };
+  attach(ws: WebSocket, ip = ''): void {
+    const client: Client = { ws, ip, profileId: null, alive: true, tokens: RATE_BURST, lastRefill: Date.now() };
     this.clients.add(client);
     ws.on('pong', () => {
       client.alive = true;
@@ -335,11 +338,30 @@ export class Hub {
     let profile = profileForToken(this.store, msg.token);
     let token = typeof msg.token === 'string' ? msg.token : '';
     if (!profile) {
+      if (!this.allowCreation(client.ip)) {
+        this.error(client, 'rate_limited');
+        return;
+      }
       const created = createProfile(this.store, { name: msg.name, avatar: msg.avatar });
       profile = created.profile;
       token = created.token;
     }
     this.login(client, profile, token);
+  }
+
+  /** Au plus `accountsPerIpPerHour` nouveaux comptes par heure et par adresse IP. */
+  private allowCreation(ip: string): boolean {
+    if (!ip || this.config.accountsPerIpPerHour <= 0) return true;
+    const now = Date.now();
+    const recent = (this.creations.get(ip) ?? []).filter((t) => now - t < 3_600_000);
+    if (recent.length >= this.config.accountsPerIpPerHour) {
+      this.creations.set(ip, recent);
+      return false;
+    }
+    recent.push(now);
+    this.creations.set(ip, recent);
+    if (this.creations.size > 50_000) this.creations.clear();
+    return true;
   }
 
   private restore(client: Client, code: unknown): void {
@@ -694,10 +716,7 @@ export class Hub {
     const now = Date.now();
     if (this.leaderboardCache && now - this.leaderboardCache.at < 60_000) return this.leaderboardCache.entries;
     const entries = this.store
-      .allProfiles()
-      .filter((p) => p.stats.played > 0)
-      .sort((a, b) => b.xp - a.xp || b.stats.won - a.stats.won)
-      .slice(0, 50)
+      .topProfiles(50)
       .map((p, i) => ({ rank: i + 1, player: publicProfile(p, now), xp: p.xp, won: p.stats.won }));
     this.leaderboardCache = { at: now, entries };
     return entries;

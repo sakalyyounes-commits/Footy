@@ -1,6 +1,7 @@
 import {
   applyPlay,
   BOT_PERSONAS,
+  chooseCard,
   makeRules,
   modePlayers,
   newGame,
@@ -207,6 +208,12 @@ export class LocalController extends GameController {
     this.save();
     this.enqueue(toDisplay(tr.steps));
     return true;
+  }
+
+  /** Carte conseillée au joueur (le bot « Mtwasset » à sa place) — mode hors ligne uniquement. */
+  hint(): Card | null {
+    if (!this.canPlay()) return null;
+    return chooseCard(viewFor(this.state, ME), 'medium');
   }
 
   continueRound(): void {

@@ -5,7 +5,7 @@ import { extname, join, normalize, resolve, sep } from 'node:path';
 import { WebSocketServer } from 'ws';
 import type { ServerConfig } from './config';
 import { Hub } from './hub';
-import { Store } from './store';
+import { openStore, type Store } from './store';
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -104,7 +104,7 @@ function invitePage(config: ServerConfig, code: string): string {
 </html>`;
 }
 
-export function createGameServer(config: ServerConfig, store = new Store(config.dataDir)): GameServer {
+export function createGameServer(config: ServerConfig, store: Store = openStore(config.dataDir)): GameServer {
   const hub = new Hub(config, store);
   const staticRoot = config.staticDir && existsSync(config.staticDir) ? resolve(config.staticDir) : '';
 
@@ -198,7 +198,9 @@ export function createGameServer(config: ServerConfig, store = new Store(config.
       socket.destroy();
       return;
     }
-    wss.handleUpgrade(req, socket, head, (ws) => hub.attach(ws));
+    const forwarded = config.trustProxy ? String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() : '';
+    const ip = forwarded || req.socket.remoteAddress || '';
+    wss.handleUpgrade(req, socket, head, (ws) => hub.attach(ws, ip));
   });
 
   const heartbeat = setInterval(() => hub.heartbeat(), 30_000);
@@ -217,7 +219,7 @@ export function createGameServer(config: ServerConfig, store = new Store(config.
         clearInterval(heartbeat);
         hub.close();
         wss.close();
-        store.flush();
+        store.close();
         http.close(() => resolveClose());
         http.closeAllConnections();
       }),

@@ -250,9 +250,16 @@ export function ResultModal({
               <svg viewBox="0 0 120 120" width={96} height={96}>
                 <polygon points={starPoints(60, 60, 56, 40)} fill={r.won ? 'url(#g-gold)' : '#5a6b64'} stroke="#7a5310" strokeWidth="2" />
                 <polygon points={starPoints(60, 60, 40, 28)} fill={r.won ? '#c0392b' : '#2c3e50'} />
-                <text x="60" y="72" textAnchor="middle" fontSize="34">
-                  {r.forfeit ? '🏳️' : r.won ? '🏆' : '🃏'}
-                </text>
+                {r.won ? (
+                  <use href="#e-crown" x="34" y="42" width="52" height="36" />
+                ) : r.forfeit ? (
+                  <path d="M47 38 V84 M47 40 H76 L69 50 L76 60 H47" fill="#fdf6e3" stroke="#fdf6e3" strokeWidth="4" strokeLinejoin="round" />
+                ) : (
+                  <g transform="rotate(-8 60 60)">
+                    <rect x="46" y="38" width="28" height="44" rx="4" fill="#fdf6e3" stroke="#7a5310" strokeWidth="2" />
+                    <polygon points={starPoints(60, 60, 9, 6)} fill="#0b5d45" />
+                  </g>
+                )}
               </svg>
             </motion.div>
             <div className={`result-title ${r.won ? 'gold-text' : ''}`}>

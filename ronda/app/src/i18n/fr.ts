@@ -152,6 +152,8 @@ export const fr = {
   'game.forfeit': 'Partie abandonnée',
   'game.target': 'en {n}',
   'game.pile': 'Ramassées',
+  'game.drop': 'Pose',
+  'game.hint': 'Conseil',
   'game.emotes': 'Messages',
   'game.opponent_left': 'Adversaire parti',
   'game.pending': 'Paquet en jeu',

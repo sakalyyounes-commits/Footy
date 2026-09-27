@@ -153,6 +153,8 @@ export const en: Dictionary = {
   'game.forfeit': 'Game forfeited',
   'game.target': 'to {n}',
   'game.pile': 'Captured',
+  'game.drop': 'Drop',
+  'game.hint': 'Hint',
   'game.emotes': 'Messages',
   'game.opponent_left': 'Opponent left',
   'game.pending': 'Pile at stake',

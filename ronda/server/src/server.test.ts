@@ -170,6 +170,16 @@ describe('comptes', () => {
     expect((await a.next('error')).code).toBe('bad_name');
   });
 
+  it('limite la création de comptes par adresse IP', async () => {
+    await start({ accountsPerIpPerHour: 2 });
+    await client().hello();
+    await client().hello();
+    const third = client();
+    await third.opened();
+    third.send({ t: 'hello', v: PROTOCOL_VERSION });
+    expect((await third.next('error')).code).toBe('rate_limited');
+  });
+
   it('restaure le compte sur un autre appareil avec le code de transfert', async () => {
     await start();
     const a = client();

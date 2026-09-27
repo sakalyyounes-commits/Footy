@@ -6,6 +6,9 @@
 - 🔒 **Aucun compte, aucun serveur** : les données restent dans le navigateur de l’appareil.
 - 🇲🇦 Pensée pour le Maroc : horaires de prière du ministère des Habous, dirham (DH), plats marocains, mode Ramadan.
 
+> 🃏 **Nouveau dans ce dépôt : [Ronda Dyalna](ronda/README.md)**, le jeu de cartes marocain Ronda en ligne
+> (Android, iPhone, web) — dossier [`ronda/`](ronda/), indépendant de Hayati.
+
 ## Les modules
 
 | Module | Contenu |
