@@ -26,8 +26,9 @@ ENV NODE_ENV=production \
     STATIC_DIR=/srv/public
 COPY --from=build /repo/server/dist/server.js ./server.js
 COPY --from=build /repo/app/dist ./public
-RUN mkdir -p /data && chown -R node:node /data /srv
-USER node
+# Pas d'utilisateur dédié : les volumes persistants (Fly.io, Render) sont montés en root
+# et la base SQLite doit pouvoir y écrire.
+RUN mkdir -p /data
 VOLUME ["/data"]
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://127.0.0.1:8080/health || exit 1
