@@ -45,6 +45,23 @@ jobs:
       - name: Build du serveur
         run: npm run build -w @ronda/server
 
+  e2e:
+    name: Parcours joueurs dans un navigateur
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ronda/package-lock.json
+      - run: npm ci
+      - run: npm run build -w @ronda/app && npm run build -w @ronda/server
+      - run: npx playwright install --with-deps chromium
+      - name: Hors ligne, amis par lien d'invitation, file en ligne
+        run: npm run e2e
+
   android:
     name: APK Android (debug)
     needs: test
@@ -93,13 +110,16 @@ jobs:
       - name: Démarrage et contrôle de santé
         run: |
           docker run -d --name ronda -p 8080:8080 ronda-dyalna
+          ok=0
           for i in $(seq 1 20); do
-            if curl -fsS http://127.0.0.1:8080/health; then echo; break; fi
+            if curl -fsS http://127.0.0.1:8080/health; then ok=1; echo; break; fi
             sleep 1
           done
+          docker logs ronda
+          test "$ok" = 1
           curl -fsS http://127.0.0.1:8080/api/status
           curl -fsS -H 'Accept: text/html' http://127.0.0.1:8080/ | grep -q 'Ronda'
-          docker logs ronda
+          curl -fsS http://127.0.0.1:8080/join/ABCDE | grep -q 'ABCDE'
 
   ios:
     name: Application iOS (simulateur)

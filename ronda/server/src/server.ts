@@ -79,6 +79,7 @@ function invitePage(config: ServerConfig, code: string): string {
 <meta property="og:title" content="Rejoins ma table de Ronda ! 🃏" />
 <meta property="og:description" content="Code de la table : ${safe}. Ronda Dyalna — le jeu de cartes marocain en ligne." />
 <meta property="og:image" content="/og-image.png" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <style>
   body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: system-ui, sans-serif;
     background: radial-gradient(circle at 50% 30%, #146b52, #06261d); color: #fdf6e3; }

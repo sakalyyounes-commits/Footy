@@ -106,7 +106,8 @@ export function App() {
     };
   }, []);
 
-  const key = `${stack.length}-${shown.name}`;
+  // L'écran de bienvenue ne doit pas se rejouer si la navigation change en dessous (lien d'invitation).
+  const key = onboarded ? `${stack.length}-${shown.name}` : 'onboarding';
   const isGame = shown.name === 'game';
   return (
     <div className="app">
