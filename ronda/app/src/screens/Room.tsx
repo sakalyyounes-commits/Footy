@@ -1,5 +1,4 @@
 import { Bot, Copy, Crown, Share2, UserPlus, X } from 'lucide-react';
-import { useEffect } from 'react';
 import { teamOf, type BotLevel, type SeatInfo } from '@ronda/core';
 import { FramedAvatar } from '../components/Avatar';
 import { TopBar } from '../components/ui';
@@ -21,10 +20,7 @@ export function Room() {
   const room = useSession((s) => s.room);
   const profile = useSession((s) => s.profile);
 
-  useEffect(() => {
-    if (!room) nav.pop();
-  }, [room, nav]);
-
+  // Salon fermé ou partie lancée : la navigation est gérée par la session (room.closed, match.start).
   if (!room || !profile) return null;
   const isHost = room.hostId === profile.id;
   const link = inviteLink(room.code);
@@ -33,6 +29,7 @@ export function Room() {
   function leave() {
     connection.send({ t: 'room.leave' });
     useSession.setState({ room: null });
+    nav.pop();
   }
 
   function seatAction(s: SeatInfo) {

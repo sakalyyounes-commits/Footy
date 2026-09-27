@@ -27,7 +27,8 @@ interface NavState {
 export const useNav = create<NavState>((set) => ({
   stack: [{ name: 'home' }],
   push: (s) => set((st) => ({ stack: [...st.stack, s] })),
-  pop: () => set((st) => ({ stack: st.stack.length > 1 ? st.stack.slice(0, -1) : st.stack })),
+  // Rien à dépiler : on renvoie le même état pour ne réveiller aucun abonné.
+  pop: () => set((st) => (st.stack.length > 1 ? { stack: st.stack.slice(0, -1) } : st)),
   replace: (s) => set((st) => ({ stack: [...st.stack.slice(0, -1), s] })),
   reset: (s = { name: 'home' }) => set({ stack: s.name === 'home' ? [s] : [{ name: 'home' }, s] }),
 }));

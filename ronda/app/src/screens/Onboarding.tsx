@@ -21,7 +21,9 @@ export function Onboarding() {
     audio.unlock();
     s.set({ name: clean, onboarded: true });
     connection.send({ t: 'profile.update', name: clean, avatar: s.avatar });
-    nav.reset();
+    // Arrivé par un lien d'invitation : on garde l'écran « amis » avec le code de la table.
+    const top = nav.stack[nav.stack.length - 1];
+    if (top.name !== 'friends') nav.reset();
   }
 
   return (
