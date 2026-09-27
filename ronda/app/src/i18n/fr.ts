@@ -81,6 +81,9 @@ export const fr = {
   'friends.points': '{n} points',
   'friends.chain': 'Darba en chaîne',
   'friends.chain_sub': 'B’khamsa et b’achra : le suivant peut rebondir',
+  'friends.last_card': 'Dernière carte du donneur',
+  'friends.last_card_sub':
+    'Il prend avec un 12 : +5 pour lui. Avec un 1 ou sans rien prendre : +5 pour l’adversaire',
   'friends.create_btn': 'Créer la table',
 
   'room.title': 'Ta table',
@@ -102,6 +105,7 @@ export const fr = {
   'room.rules': 'Partie en {target} · {chain}',
   'room.chain_on': 'darba en chaîne',
   'room.chain_off': 'darba simple',
+  'room.last_card': 'dernière carte ±5',
   'room.stake': 'Mise : {n}',
   'room.leave': 'Quitter la table',
 
@@ -132,6 +136,15 @@ export const fr = {
   'game.announces': 'Annonces',
   'game.announce_win': '{name} remporte les annonces',
   'game.announce_split': 'Égalité : le pot est partagé',
+  'game.announce_lowest': 'Quatre rondas : la plus petite gagne',
+  'game.draw_title': 'Tirage du donneur',
+  'game.draw_sub': 'La plus petite carte distribue',
+  'game.draw_tie': 'Égalité ! {names} retirent',
+  'game.draw_dealer': '{name} distribue',
+  'game.last_card': 'Dernière carte',
+  'game.last_card_king': '{name} prend avec le 12 : +{n} pour {team}',
+  'game.last_card_ace': '{name} prend avec le 1 : +{n} pour {team}',
+  'game.last_card_miss': '{name} ne prend rien : +{n} pour {team}',
   'game.sweep': '{name} ramasse le reste du tapis',
   'game.round_over': 'Fin de la manche {n}',
   'game.cards': 'Cartes',
@@ -171,6 +184,7 @@ export const fr = {
   'reason.achra': 'B’achra',
   'reason.missa': 'Missa',
   'reason.cards': 'Cartes',
+  'reason.lastCard': 'Dernière carte',
 
   'phrase.salam': 'Salam 👋',
   'phrase.yallah': 'Yallah !',
@@ -312,6 +326,9 @@ export const fr = {
   'rules.title': 'Règles de la Ronda',
   'rules.intro':
     'La Ronda se joue avec le jeu espagnol de 40 cartes : deniers (dheb), coupes (tbaye9), épées (syouf) et bâtons (zrawet), du 1 au 7 puis 10 (sota), 11 (caballo) et 12 (rey). Le but : atteindre 41 points avant l’autre équipe.',
+  'rules.dealer_title': 'Qui distribue ?',
+  'rules.dealer':
+    'Au début de la partie, chaque joueur tire une carte : la plus petite distribue (1, 2… 7, 10, 11, 12 ; la couleur ne compte pas). Si plusieurs joueurs ont la plus petite, eux seuls retirent. Le donneur distribue en commençant par le joueur à sa droite, qui joue en premier ; à la manche suivante, c’est ce joueur qui distribue.',
   'rules.deal_title': 'La distribution',
   'rules.deal':
     'À 2 joueurs : 4 cartes chacun, 5 fois par manche. À 4 joueurs (2 contre 2, partenaires face à face) : 4 cartes chacun à la première donne, puis 3 et 3. Rien n’est posé sur le tapis au départ.',
@@ -320,18 +337,21 @@ export const fr = {
     'À ton tour, pose une carte. Si une carte de même valeur est sur le tapis, tu la prends, ainsi que toutes les cartes qui la suivent sans trou (1-2-3-4-5-6-7-10-11-12). Exemple : ton 5 prend le 5, puis le 6, le 7 et le 10 s’ils sont là.',
   'rules.announce_title': 'Ronda et Tringa',
   'rules.announce':
-    'Une paire en main, c’est une Ronda (1 point) ; trois cartes pareilles, une Tringa (5 points). Si plusieurs joueurs annoncent, la meilleure combinaison (tringa avant ronda, puis la plus haute) rafle tous les points ; en cas d’égalité, le pot est partagé.',
+    'Une paire en main, c’est une Ronda (1 point) ; trois cartes pareilles, une Tringa (5 points). Si plusieurs joueurs annoncent, la plus grande ronda gagne et rafle tous les points. Une tringa bat toutes les rondas (5 points plus 1 par ronda) ; entre deux tringas, la plus grande gagne. Exception : si les quatre joueurs ont chacun une ronda, c’est la plus petite qui gagne (avec cinq rondas, quand un joueur en a deux, la plus grande reprend le dessus). En cas d’égalité, le pot est partagé.',
   'rules.darba_title': 'Darba : b’wahed, b’khamsa, b’achra',
   'rules.darba':
     'Prendre la carte que vient de poser le joueur précédent, c’est une Darba : 1 point (b’wahed). En 2 contre 2, le joueur suivant peut rebondir avec la troisième carte de même valeur (b’khamsa, 5 points), puis le suivant avec la quatrième (b’achra, 10 points) : le dernier qui rebondit emporte tout le paquet et les points.',
   'rules.missa_title': 'Missa',
   'rules.missa': 'Vider complètement le tapis rapporte 1 point (sauf avec la toute dernière carte de la manche).',
+  'rules.lastcard_title': 'La dernière carte du donneur',
+  'rules.lastcard':
+    'Le donneur joue la toute dernière carte de la manche. S’il prend avec un 12, son équipe marque 5 points. S’il prend avec un 1, ou s’il ne prend rien, c’est l’équipe adverse qui marque 5 points.',
   'rules.end_title': 'Fin de manche',
   'rules.end':
     'Quand toutes les cartes sont jouées, le dernier à avoir pris ramasse le reste du tapis. On compte les cartes : chaque carte au-delà de 20 vaut 1 point. La première équipe à 41 points gagne, même en pleine manche !',
   'rules.tips_title': 'Astuces de m3allem',
   'rules.tips':
-    'Retiens les cartes sorties : poser une carte dont les trois autres sont déjà tombées ne risque aucune darba. Garde une carte qui prend pour la fin de la dernière donne : le dernier preneur ramasse tout le tapis.',
+    'Retiens les cartes sorties : poser une carte dont les trois autres sont déjà tombées ne risque aucune darba. Donneur, garde pour la fin une carte qui prendra, idéalement un 12, jamais un 1 : le dernier preneur ramasse aussi tout le tapis.',
 };
 
 export type TranslationKey = keyof typeof fr;

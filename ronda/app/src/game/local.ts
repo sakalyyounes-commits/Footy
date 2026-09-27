@@ -88,14 +88,20 @@ export class LocalController extends GameController {
 
   constructor(setup: OfflineSetup, saved?: SavedGame) {
     const players = modePlayers(setup.mode);
-    const rules = makeRules(players, { target: setup.target, darbaChain: setup.chain });
+    const rules = makeRules(players, {
+      target: setup.target,
+      darbaChain: setup.chain,
+      // Réglage absent des sauvegardes plus anciennes : règle activée.
+      lastCardPoints: setup.lastCard === false ? 0 : 5,
+    });
     const seats = saved?.seats ?? makeSeats(setup.mode, setup.level);
     let state: GameState;
     let steps: Step[] = [];
     if (saved) {
       state = saved.state;
     } else {
-      const tr = newGame(rules, { dealer: Math.floor(Math.random() * players) });
+      // Les joueurs tirent une carte : la plus petite désigne le donneur.
+      const tr = newGame(rules);
       state = tr.state;
       steps = tr.steps;
     }
@@ -112,6 +118,7 @@ export class LocalController extends GameController {
       deadline: null,
       turnMs: 0,
       banner: null,
+      draw: null,
       floaters: [],
       bubbles: [],
       summary: null,

@@ -16,6 +16,7 @@ const BANNER_MS: Record<Banner['kind'], number> = {
   lastDeal: 1_100,
   announce: 2_300,
   sweep: 1_200,
+  lastCard: 2_200,
 };
 
 /**
@@ -84,7 +85,8 @@ export abstract class GameController {
     this.queue = [];
   }
 
-  private speed(): number {
+  /** Facteur de durée des animations (réglage « rapide »). */
+  speed(): number {
     return useSettings.getState().speed === 'fast' ? 0.6 : 1;
   }
 
@@ -129,9 +131,14 @@ export abstract class GameController {
     const myTeam = teamOf(me);
     const patch: Partial<GameDisplay> = { view: step.view, lastEvent: e };
     switch (e.type) {
+      case 'dealerDraw':
+        patch.draw = { id: this.id(), rounds: e.rounds, dealer: e.dealer };
+        sfx('deal');
+        break;
       case 'roundStart':
         patch.summary = null;
         patch.lastPlay = null;
+        patch.draw = null;
         break;
       case 'deal':
         sfx('deal');
@@ -149,7 +156,9 @@ export abstract class GameController {
         break;
       }
       case 'announceResult':
-        if (e.entries.length) this.showBanner({ id: this.id(), kind: 'announce', entries: e.entries, winners: e.winners, points: e.points });
+        if (e.entries.length) {
+          this.showBanner({ id: this.id(), kind: 'announce', entries: e.entries, winners: e.winners, points: e.points, lowest: e.lowest === true });
+        }
         break;
       case 'play':
         patch.lastPlay = { seat: e.seat, card: e.card };
@@ -173,6 +182,13 @@ export abstract class GameController {
         sfx('missa');
         vibrate('medium');
         break;
+      case 'lastCard': {
+        const mine = e.team === myTeam;
+        this.showBanner({ id: this.id(), kind: 'lastCard', seat: e.seat, card: e.card, outcome: e.outcome, team: e.team, points: e.points });
+        sfx(mine ? 'darba' : 'escalate');
+        vibrate(mine ? 'success' : 'heavy');
+        break;
+      }
       case 'points':
         this.addFloater({ seat: e.seat, team: e.team, points: e.points, reason: e.reason });
         if (e.team === myTeam) sfx('coin');

@@ -1,4 +1,4 @@
-import { compareCards, DECK_SIZE, isCard, newDeck, rankIndex, RANKS, type Card } from './cards';
+import { compareCards, DECK_SIZE, isCard, newDeck, rankIndex, rankOf, RANKS, type Card } from './cards';
 import { shuffle, type Rng } from './rng';
 import { dealPattern, type Rules } from './rules';
 import {
@@ -10,8 +10,10 @@ import {
   type DarbaLevel,
   type GameEvent,
   type GameState,
+  type LastCardOutcome,
   type PointReason,
   type Seat,
+  type SeatPlay,
   type Step,
   type Team,
   type Transition,
@@ -29,7 +31,14 @@ export interface DeckOptions {
 }
 
 export interface NewGameOptions extends DeckOptions {
+  /** Donneur imposé (tests, tutoriel). Sans lui, les joueurs tirent une carte : la plus petite donne. */
   dealer?: Seat;
+}
+
+export interface DealerDraw {
+  /** Tirages successifs : le premier concerne tout le monde, les suivants les seuls ex æquo. */
+  rounds: SeatPlay[][];
+  dealer: Seat;
 }
 
 function emit(s: GameState, ctx: Ctx, event: GameEvent): void {
@@ -92,13 +101,35 @@ export function stackDeck(players: 2 | 4, dealer: Seat, deals: Card[][][], rest:
   return order;
 }
 
+/**
+ * Tirage du donneur : chaque joueur tire une carte et la plus petite donne (1, 2… 7, 10, 11, 12 ;
+ * la couleur ne compte pas). Si plusieurs joueurs ont la plus petite, eux seuls retirent, jusqu'à
+ * ce qu'il n'en reste qu'un.
+ */
+export function drawForDealer(players: number, rng: Rng = Math.random): DealerDraw {
+  let pool = shuffle(newDeck(), rng);
+  let contenders = Array.from({ length: players }, (_, seat) => seat);
+  const rounds: SeatPlay[][] = [];
+  for (;;) {
+    // Paquet épuisé à force d'égalités (en pratique jamais) : on rebat les 40 cartes.
+    if (pool.length < contenders.length) pool = shuffle(newDeck(), rng);
+    const round = contenders.map((seat) => ({ seat, card: pool.pop()! }));
+    rounds.push(round);
+    const lowest = Math.min(...round.map((d) => rankIndex(d.card)));
+    contenders = round.filter((d) => rankIndex(d.card) === lowest).map((d) => d.seat);
+    if (contenders.length === 1) return { rounds, dealer: contenders[0] };
+  }
+}
+
 export function newGame(rules: Rules, opts: NewGameOptions = {}): Transition {
   const n = rules.players;
+  const draw = opts.dealer === undefined ? drawForDealer(n, opts.rng ?? Math.random) : null;
+  const dealer = draw ? draw.dealer : opts.dealer! % n;
   const s: GameState = {
     rules,
     phase: 'play',
     round: 1,
-    dealer: (opts.dealer ?? 0) % n,
+    dealer,
     dealNo: 0,
     deck: [],
     hands: Array.from({ length: n }, () => []),
@@ -106,7 +137,7 @@ export function newGame(rules: Rules, opts: NewGameOptions = {}): Transition {
     pending: null,
     piles: [[], []],
     scores: [0, 0],
-    turn: 0,
+    turn: (dealer + 1) % n,
     lastPlayed: null,
     lastCapturer: null,
     announcements: [],
@@ -117,6 +148,7 @@ export function newGame(rules: Rules, opts: NewGameOptions = {}): Transition {
     moveCount: 0,
   };
   const ctx: Ctx = { steps: [] };
+  if (draw) emit(s, ctx, { type: 'dealerDraw', rounds: draw.rounds, dealer });
   startRound(s, prepareDeck(opts), ctx);
   return { state: s, steps: ctx.steps! };
 }
@@ -215,6 +247,19 @@ function announcementReason(a: Announcement): PointReason {
   return a.combos[0].kind;
 }
 
+/**
+ * Les quatre joueurs ont chacun exactement une ronda (et aucune tringa) : dans ce cas, c'est la
+ * plus petite ronda qui gagne. Avec cinq rondas (un joueur en a deux), la plus grande reprend
+ * le dessus.
+ */
+export function fourRondas(entries: readonly Announcement[], players: number): boolean {
+  return (
+    players === 4 &&
+    entries.length === 4 &&
+    entries.every((e) => e.combos.length === 1 && e.combos[0].kind === 'ronda')
+  );
+}
+
 function announce(s: GameState, ctx: Ctx): void {
   const n = s.rules.players;
   const entries: Announcement[] = [];
@@ -246,8 +291,10 @@ function resolveAnnouncements(s: GameState, ctx: Ctx): void {
   s.announcements = [];
   if (!entries.length) return;
   const pot = entries.reduce((sum, e) => sum + announcementValue(e, s.rules), 0);
-  const best = Math.max(...entries.map((e) => comboStrength(e.combos[0])));
-  const winners = entries.filter((e) => comboStrength(e.combos[0]) === best);
+  const lowest = fourRondas(entries, s.rules.players);
+  const strengths = entries.map((e) => comboStrength(e.combos[0]));
+  const best = lowest ? Math.min(...strengths) : Math.max(...strengths);
+  const winners = entries.filter((_, i) => strengths[i] === best);
   const awards: { seat: Seat; points: number }[] = [];
   if (new Set(winners.map((w) => teamOf(w.seat))).size === 1) {
     awards.push({ seat: winners[0].seat, points: pot });
@@ -258,7 +305,13 @@ function resolveAnnouncements(s: GameState, ctx: Ctx): void {
   }
   const points: [number, number] = [0, 0];
   for (const a of awards) points[teamOf(a.seat)] += a.points;
-  emit(s, ctx, { type: 'announceResult', entries, winners: winners.map((w) => w.seat), points });
+  emit(s, ctx, {
+    type: 'announceResult',
+    entries,
+    winners: winners.map((w) => w.seat),
+    points,
+    ...(lowest ? { lowest: true as const } : {}),
+  });
   const reason = announcementReason(winners[0]);
   for (const a of awards) award(s, ctx, teamOf(a.seat), a.points, reason, a.seat);
   checkWin(s, ctx);
@@ -305,6 +358,22 @@ function finalizePending(s: GameState, ctx: Ctx): void {
   checkWin(s, ctx);
 }
 
+/**
+ * Dernière carte de la manche, toujours jouée par le donneur : s'il prend avec un 12, son équipe
+ * marque les points ; s'il prend avec un 1, ou s'il ne prend rien, c'est l'équipe adverse.
+ */
+function dealerLastCard(s: GameState, ctx: Ctx, seat: Seat, card: Card, took: boolean): void {
+  // `?? 0` : parties sauvegardées avant l'arrivée de la règle.
+  const points = s.rules.lastCardPoints ?? 0;
+  if (points <= 0 || seat !== s.dealer) return;
+  const rank = rankOf(card);
+  const outcome: LastCardOutcome | null = !took ? 'miss' : rank === 12 ? 'king' : rank === 1 ? 'ace' : null;
+  if (outcome === null) return;
+  const team: Team = outcome === 'king' ? teamOf(seat) : teamOf(seat + 1);
+  emit(s, ctx, { type: 'lastCard', seat, card, outcome, team, points });
+  award(s, ctx, team, points, 'lastCard', outcome === 'king' ? seat : null);
+}
+
 /** Version mutable du coup (utilisée telle quelle par les simulations des bots). */
 export function playMut(s: GameState, seat: Seat, card: Card, ctx: Ctx): void {
   if (s.phase !== 'play') throw new RondaError('not_playing');
@@ -347,6 +416,10 @@ export function playMut(s: GameState, seat: Seat, card: Card, ctx: Ctx): void {
       finalizePending(s, ctx);
       if (isOver(s)) return;
     }
+    if (lastCardOfRound) {
+      dealerLastCard(s, ctx, seat, card, true);
+      if (checkWin(s, ctx)) return;
+    }
     endTurn(s, ctx);
     return;
   }
@@ -359,6 +432,10 @@ export function playMut(s: GameState, seat: Seat, card: Card, ctx: Ctx): void {
 
   const match = s.table.find((c) => c !== card && rankIndex(c) === r);
   if (match === undefined) {
+    if (lastCardOfRound) {
+      dealerLastCard(s, ctx, seat, card, false);
+      if (checkWin(s, ctx)) return;
+    }
     endTurn(s, ctx);
     return;
   }
@@ -393,6 +470,7 @@ export function playMut(s: GameState, seat: Seat, card: Card, ctx: Ctx): void {
     emit(s, ctx, { type: 'missa', seat });
     award(s, ctx, team, s.rules.missaPoints, 'missa', seat);
   }
+  if (lastCardOfRound) dealerLastCard(s, ctx, seat, card, true);
   if (checkWin(s, ctx)) return;
   endTurn(s, ctx);
 }

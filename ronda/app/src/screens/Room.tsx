@@ -64,6 +64,7 @@ export function Room() {
           <span className="code gold-text">{room.code}</span>
           <span className="small muted">
             {t('room.rules', { target: room.rules.target, chain: chainLabel })}
+            {room.rules.lastCardPoints > 0 ? ` · ${t('room.last_card')}` : ''}
             {room.stake > 0 ? ` · ${t('room.stake', { n: room.stake })}` : ''}
           </span>
         </div>

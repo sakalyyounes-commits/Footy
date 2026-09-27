@@ -83,13 +83,25 @@ places) : l'hôte n'a plus qu'à relancer pour la revanche.
    joue une manche.
 3. **À deux** : l'ordinateur crée une table, le téléphone la rejoint avec le code → lancez.
 
-À vérifier : les cartes se posent et se ramassent, les bandeaux **« Darba ! »** et **« Missa ! »**
-s'affichent, les scores montent, la fin de manche affiche le récapitulatif.
+À vérifier : le **tirage du donneur** s'affiche au début de la partie, les cartes se posent et se
+ramassent, les bandeaux **« Darba ! »**, **« Missa ! »** et **« Dernière carte »** s'affichent, les
+scores montent, la fin de manche affiche le récapitulatif.
 
-**Règles jouées :** 4 cartes à la première donne puis 3 en 2 contre 2 ; ronda (paire) 1 point,
-tringa (brelan) 5 points ; darba (prendre la carte que vient de poser le joueur précédent) : b'wahed
-1 point, b'khamsa 5, b'achra 10 ; missa (vider le tapis) 1 point ; chaque carte au-delà de 20 vaut
-1 point ; la première équipe à 41 gagne (21, 31 ou 61 au choix).
+**Règles jouées :**
+
+- **Qui distribue** : au début, chaque joueur tire une carte (le jeu le montre sur la table) ; la
+  plus petite distribue. En cas d'égalité, seuls les ex æquo retirent. Le joueur à droite du donneur
+  joue en premier, et à la manche suivante c'est lui qui distribue.
+- 4 cartes à la première donne puis 3 et 3 en 2 contre 2.
+- **Annonces** : ronda (paire) 1 point, tringa (brelan) 5 points. La plus grande ronda gagne ; une
+  tringa bat les rondas (5 points + 1 par ronda) ; entre deux tringas, la plus grande gagne. Si les
+  **quatre joueurs ont chacun une ronda**, c'est **la plus petite** qui gagne (avec cinq rondas, la
+  plus grande reprend le dessus).
+- **Darba** (prendre la carte que vient de poser le joueur précédent) : b'wahed 1 point, b'khamsa 5,
+  b'achra 10 ; **missa** (vider le tapis) 1 point.
+- **Dernière carte du donneur** : s'il prend avec un 12, +5 pour son équipe ; s'il prend avec un 1,
+  ou s'il ne prend rien, +5 pour l'équipe adverse (règle désactivable avant la partie).
+- Chaque carte au-delà de 20 vaut 1 point ; la première équipe à 41 gagne (21, 31 ou 61 au choix).
 
 ---
 

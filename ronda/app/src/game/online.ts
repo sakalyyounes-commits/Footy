@@ -44,6 +44,7 @@ export class OnlineController extends GameController {
       deadline: null,
       turnMs: info.turnMs,
       banner: null,
+      draw: null,
       floaters: [],
       bubbles: [],
       summary: null,
@@ -90,6 +91,7 @@ export class OnlineController extends GameController {
           pendingPlay: null,
           deadline: this.toLocal(msg.deadline),
           banner: null,
+          draw: null,
         });
         break;
       case 'match.seat':

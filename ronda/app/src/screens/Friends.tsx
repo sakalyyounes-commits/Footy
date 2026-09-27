@@ -17,6 +17,7 @@ export function Friends({ join }: { join?: string }) {
   const [mode, setMode] = useState<Mode>('2v2');
   const [target, setTarget] = useState(41);
   const [chain, setChain] = useState(true);
+  const [lastCard, setLastCard] = useState(true);
   const [stake, setStake] = useState(0);
   const [code, setCode] = useState(join ?? '');
 
@@ -28,7 +29,8 @@ export function Friends({ join }: { join?: string }) {
   }, [join, online]);
 
   function create() {
-    if (!connection.send({ t: 'room.create', mode, rules: { target, darbaChain: chain }, stake })) toast(t('err.offline'), 'error');
+    const rules = { target, darbaChain: chain, lastCardPoints: lastCard ? 5 : 0 };
+    if (!connection.send({ t: 'room.create', mode, rules, stake })) toast(t('err.offline'), 'error');
   }
 
   function joinRoom() {
@@ -85,6 +87,13 @@ export function Friends({ join }: { join?: string }) {
             <div className="small muted">{t('friends.chain_sub')}</div>
           </div>
           <Switch checked={chain} onChange={setChain} label={t('friends.chain')} />
+        </div>
+        <div className="row">
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800 }}>{t('friends.last_card')}</div>
+            <div className="small muted">{t('friends.last_card_sub')}</div>
+          </div>
+          <Switch checked={lastCard} onChange={setLastCard} label={t('friends.last_card')} />
         </div>
         <button className="btn btn-gold btn-block btn-lg" disabled={!online} onClick={create}>
           {t('friends.create_btn')}

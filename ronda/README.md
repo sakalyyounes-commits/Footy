@@ -52,14 +52,16 @@ Le plan de lancement (stores, croissance, revenus) est dans [`docs/LANCEMENT.md`
 Conformes à la Ronda telle qu'on la joue au Maroc (référence : pagat.com et règles marocaines) :
 
 - **Jeu espagnol de 40 cartes** : deniers (*dheb*), coupes (*tbaye9*), épées (*syouf*), bâtons (*zrawet*) ; 1 à 7, puis 10 (*sota*), 11 (*caballo*), 12 (*rey*).
+- **Qui distribue** : en début de partie, chaque joueur tire une carte ; **la plus petite distribue** (en cas d'égalité, seuls les ex æquo retirent). Le joueur à droite du donneur reçoit et joue en premier ; le donneur passe à droite à chaque manche.
 - **Distribution** : 1v1 → 4 cartes × 5 donnes ; **2v2 → 4 cartes, puis 3 et 3**, partenaires face à face. Tapis vide au départ.
 - **Prise** : même valeur + la suite ascendante sans trou (… 6-7-**10**-11-12).
-- **Ronda** (paire) 1 point, **Tringa** (brelan) 5 points. Plusieurs annonces : la meilleure rafle tout ; égalité entre adversaires : le pot est partagé.
+- **Ronda** (paire) 1 point, **Tringa** (brelan) 5 points. Plusieurs annonces : la plus grande ronda rafle tout ; une tringa bat toutes les rondas (5 points + 1 par ronda) ; entre deux tringas, la plus grande gagne. **Si les quatre joueurs ont chacun une ronda, c'est la plus petite qui gagne** (avec cinq rondas, la plus grande reprend le dessus). Égalité entre adversaires : le pot est partagé.
 - **Darba** : prendre la carte que vient de poser le joueur précédent → **b'wahed** (1). En 2v2, le suivant peut rebondir avec la 3e carte → **b'khamsa** (5), puis le suivant avec la 4e → **b'achra** (10) : le dernier emporte le paquet et les points.
 - **Missa** : vider le tapis → 1 point (pas avec la toute dernière carte).
+- **Dernière carte du donneur** : le donneur joue la dernière carte de la manche. Il prend avec un **12** → +5 pour son équipe ; il prend avec un **1**, ou ne prend rien → +5 pour l'équipe adverse.
 - **Fin de manche** : le dernier preneur ramasse le tapis ; chaque carte au-delà de 20 = 1 point. **Victoire immédiate à 41** (ou 21/31/61 en partie privée).
 
-Variantes réglables dans les tables privées et hors ligne : objectif, darba en chaîne (activée par défaut en 2v2, désactivée en 1v1), valeurs des points.
+Variantes réglables dans les tables privées et hors ligne : objectif, darba en chaîne (activée par défaut en 2v2, désactivée en 1v1), dernière carte du donneur (activée par défaut), valeurs des points.
 
 ## Démarrer en local
 
@@ -251,20 +253,23 @@ partagé par le serveur et l'application.
 ## Tests et qualité
 
 ```bash
-npm test            # 67 tests : règles, bots, stockage, parties complètes en ligne
+npm test            # 83 tests : règles, bots, stockage, parties complètes en ligne
 npm run typecheck   # TypeScript strict sur les trois paquets
 npm run build       # vérification + builds de l'application et du serveur
 npm run e2e         # parcours joueurs dans Chromium (après npm run build ; npx playwright install chromium)
 ```
 
-- **Règles** : distribution, prises et suites, darba simple et en chaîne, missa, annonces avec
-  égalités, fin de manche, victoire immédiate, conservation des 40 cartes sur des centaines de parties
+- **Règles** : tirage du donneur (égalités et nouveaux tirages), distribution, prises et suites,
+  darba simple et en chaîne, missa, annonces (quatre rondas, tringas, égalités), dernière carte du
+  donneur, fin de manche, victoire immédiate, conservation des 40 cartes sur des centaines de parties
   aléatoires, cohérence entre l'aperçu de prise et le coup réel.
-- **Bots** : coups légaux, bon choix sur des positions types. En simulation (parties en 41 points,
-  400 à 600 parties par duel), *Mtwasset* bat *Mbtadi* dans ~92 % des parties en 1v1 et ~85 % en 2v2 ;
-  *M3allem* bat *Mtwasset* dans ~77 % des parties en 1v1 et ~61 % en 2v2 (à quatre, la distribution
-  pèse davantage). Dans les simulations de *M3allem*, chaque joueur raisonne sans voir les autres mains
-  (auparavant il « voyait » la main suivante) : en 1v1, *M3allem* est passé de 67 % à 77 % contre *Mtwasset*.
+- **Bots** : coups légaux, bon choix sur des positions types (dont la carte à garder pour la fin
+  quand le bot distribue). En simulation avec toutes les règles (tirage du donneur, dernière carte ;
+  parties en 41 points, 400 à 1 000 parties par duel), *Mtwasset* bat *Mbtadi* dans ~87 % des parties
+  en 1v1 et ~86 % en 2v2 ; *M3allem* bat *Mtwasset* dans ~77 % des parties en 1v1 et ~65 % en 2v2
+  (à quatre, la distribution pèse davantage). Dans les simulations de *M3allem*, chaque joueur raisonne
+  sans voir les autres mains (auparavant il « voyait » la main suivante) : en 1v1, *M3allem* était ainsi
+  passé de 67 % à 77 % contre *Mtwasset*.
 - **Serveur** : vrais WebSockets — comptes, reconnexion, file d'attente, tables complétées par des bots,
   salons 2v2 entre amis, abandon, coup illégal, webhook d'achat idempotent, limite anti-abus.
 - **Bout en bout** : le serveur construit sert la version web et deux navigateurs jouent réellement —

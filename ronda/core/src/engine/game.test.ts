@@ -5,9 +5,11 @@ import {
   cardCode,
   cloneState,
   combosOf,
+  compareCards,
   countCards,
   createRng,
   DECK_SIZE,
+  drawForDealer,
   legalCards,
   makeRules,
   newDeck,
@@ -62,6 +64,20 @@ function duel(hand0: string, hand1: string, rules: Partial<Rules> = {}, rest: Ca
 function quad(hands: [string, string, string, string], rules: Partial<Rules> = {}): GameState {
   const deck = stackDeck(4, 3, [hands.map((h) => cs(h))]);
   return newGame(makeRules(4, rules), { dealer: 3, deck }).state;
+}
+
+/**
+ * 2v2 à la dernière levée de la manche : chaque joueur n'a plus qu'une carte et le donneur
+ * (place 3) joue la toute dernière.
+ */
+function lastTrick(hands: [string, string, string, string], table: string, rules: Partial<Rules> = {}): GameState {
+  const s = cloneState(quad(['1o 2o 3o 4o', '5o 6o 7o 10o', '11o 12o 1c 2c', '3c 4c 5c 6c'], rules));
+  s.deck = [];
+  s.hands = hands.map((h) => cs(h));
+  s.table = cs(table).sort(compareCards);
+  s.lastCapturer = 0;
+  s.turn = 0;
+  return s;
 }
 
 describe('cartes', () => {
@@ -126,6 +142,54 @@ describe('distribution', () => {
 
   it('refuse un paquet incomplet', () => {
     expect(() => newGame(makeRules(2), { deck: newDeck().slice(1) })).toThrow(RondaError);
+  });
+});
+
+describe('tirage du donneur', () => {
+  it('la plus petite carte donne ; en cas d’égalité, seuls les ex æquo retirent', () => {
+    const rng = createRng(12);
+    let ties = 0;
+    for (let g = 0; g < 400; g++) {
+      const players = g % 2 ? 4 : 2;
+      const { rounds, dealer } = drawForDealer(players, rng);
+      expect(rounds[0].map((d) => d.seat)).toEqual(Array.from({ length: players }, (_, i) => i));
+      rounds.forEach((round, k) => {
+        const lowest = Math.min(...round.map((d) => rankIndex(d.card)));
+        const tied = round.filter((d) => rankIndex(d.card) === lowest).map((d) => d.seat);
+        if (k < rounds.length - 1) {
+          expect(tied.length).toBeGreaterThan(1);
+          expect(rounds[k + 1].map((d) => d.seat)).toEqual(tied);
+        } else {
+          expect(tied).toEqual([dealer]);
+        }
+      });
+      if (rounds.length > 1) ties++;
+      const cards = rounds.flat().map((d) => d.card);
+      expect(new Set(cards).size).toBe(cards.length);
+    }
+    expect(ties).toBeGreaterThan(20);
+  });
+
+  it('une nouvelle partie commence par le tirage, puis le donneur distribue', () => {
+    for (const players of [2, 4] as const) {
+      const { state, steps } = newGame(makeRules(players), { rng: createRng(players) });
+      const draw = steps[0].event;
+      if (draw.type !== 'dealerDraw') throw new Error('tirage attendu');
+      expect(draw.dealer).toBe(state.dealer);
+      expect(steps[0].state.hands.every((h) => h.length === 0)).toBe(true);
+      expect(steps[1].event).toEqual({ type: 'roundStart', round: 1, dealer: state.dealer });
+      // Le joueur à droite du donneur (place suivante) reçoit en premier et commence.
+      expect(state.turn).toBe((state.dealer + 1) % players);
+    }
+    // Donneur imposé (tests, tutoriel) : pas de tirage.
+    expect(newGame(makeRules(4), { dealer: 2, rng: createRng(1) }).steps[0].event.type).toBe('roundStart');
+  });
+
+  it('chaque place a sa chance d’être donneur', () => {
+    const rng = createRng(77);
+    const counts = [0, 0, 0, 0];
+    for (let g = 0; g < 800; g++) counts[drawForDealer(4, rng).dealer]++;
+    for (const n of counts) expect(n).toBeGreaterThan(150);
   });
 });
 
@@ -373,8 +437,8 @@ describe('annonces', () => {
     expect(result.points).toEqual([1, 1]);
   });
 
-  it('2v2 : quatre rondas avec deux adversaires à égalité -> 2 points chacun', () => {
-    const s = quad(['7o 7c 1e 2e', '7e 7b 1c 2c', '3o 3c 4e 5e', '6o 6c 11e 12e']);
+  /** Joue la première donne (chacun sa plus grosse carte) et renvoie le règlement des annonces. */
+  function firstDealResult(s: GameState) {
     let st = s;
     const steps: Step[] = [];
     while (st.dealNo === 1 && st.phase === 'play') {
@@ -382,14 +446,147 @@ describe('annonces', () => {
       steps.push(...t.steps);
       st = t.state;
     }
-    const result = eventsOf(steps, 'announceResult')[0] as Extract<GameEvent, { type: 'announceResult' }>;
+    return eventsOf(steps, 'announceResult')[0] as Extract<GameEvent, { type: 'announceResult' }>;
+  }
+
+  it('2v2 : les quatre joueurs ont une ronda -> la plus petite gagne les 4 points', () => {
+    const s = quad(['7o 7c 1e 2e', '7e 7b 1c 2c', '3o 3c 4e 5e', '6o 6c 11e 12e']);
+    const result = firstDealResult(s);
+    expect(result.winners).toEqual([2]);
+    expect(result.points).toEqual([4, 0]);
+    expect(result.lowest).toBe(true);
+  });
+
+  it('2v2 : quatre rondas dont les deux plus petites à égalité -> pot partagé', () => {
+    const s = quad(['3o 3c 1e 2e', '3e 3b 1c 2c', '7o 7c 4e 5e', '6o 6c 11e 12e']);
+    const result = firstDealResult(s);
+    expect(result.winners).toEqual([0, 1]);
     expect(result.points).toEqual([2, 2]);
+  });
+
+  it('2v2 : cinq rondas (un joueur en a deux) -> la plus grande gagne', () => {
+    const s = quad(['7o 7c 2e 2b', '3o 3c 1e 5e', '4o 4c 6e 10e', '6o 6c 11e 12e']);
+    const result = firstDealResult(s);
+    expect(result.winners).toEqual([0]);
+    expect(result.points).toEqual([5, 0]);
+    expect(result.lowest).toBeUndefined();
+  });
+
+  it('2v2 : une tringa bat les rondas et rafle 5 points plus 1 par ronda', () => {
+    const s = quad(['2o 2c 2e 7b', '3o 3c 1e 5e', '4o 4c 6e 10e', '6o 6c 11e 12e']);
+    const result = firstDealResult(s);
+    expect(result.winners).toEqual([0]);
+    expect(result.points).toEqual([8, 0]);
+    expect(result.lowest).toBeUndefined();
+  });
+
+  it('2v2 : deux tringas -> la plus grande gagne', () => {
+    const s = quad(['2o 2c 2e 7b', '11o 11c 11e 5e', '4o 4c 6e 10e', '6o 3c 1e 12e']);
+    const result = firstDealResult(s);
+    expect(result.winners).toEqual([1]);
+    expect(result.points).toEqual([0, 11]);
   });
 
   it('2v2 : annonces de deux partenaires seulement -> points immédiats', () => {
     const s = quad(['7o 7c 1e 2e', '1o 2c 3e 4b', '3o 3c 3b 5e', '6o 10c 11e 12e']);
     expect(s.scores).toEqual([6, 0]);
     expect(s.announcements).toEqual([]);
+  });
+});
+
+describe('dernière carte du donneur', () => {
+  function lastCardOf(steps: Step[]) {
+    return steps.flatMap((st) => (st.event.type === 'lastCard' ? [st.event] : []));
+  }
+
+  it('le donneur prend avec un 12 : 5 points pour son équipe', () => {
+    const s = lastTrick(['3o', '4c', '5e', '12b'], '12o 7c');
+    const t = playAll(s, '3o 4c 5e 12b');
+    expect(lastCardOf(t.steps)).toEqual([{ type: 'lastCard', seat: 3, card: c('12b'), outcome: 'king', team: 1, points: 5 }]);
+    expect(pointsOf(t.steps).filter((p) => p.reason === 'lastCard')).toEqual([
+      { type: 'points', team: 1, seat: 3, points: 5, reason: 'lastCard' },
+    ]);
+    expect(t.state.phase).toBe('roundEnd');
+    expect(t.state.scores).toEqual([0, 5]);
+  });
+
+  it('le donneur prend avec un 1 : 5 points pour l’équipe adverse (et pas de missa)', () => {
+    const s = lastTrick(['5o', '6c', '7e', '1b'], '1o 2c 3e');
+    const t = playAll(s, '5o 6c 7e 1b');
+    expect(lastCardOf(t.steps)).toEqual([{ type: 'lastCard', seat: 3, card: c('1b'), outcome: 'ace', team: 0, points: 5 }]);
+    expect(pointsOf(t.steps).map((p) => [p.team, p.reason, p.points])).toEqual([[0, 'lastCard', 5]]);
+    expect(eventsOf(t.steps, 'missa')).toEqual([]);
+  });
+
+  it('le donneur ne prend rien : 5 points pour l’équipe adverse, sa carte part avec le tapis', () => {
+    const s = lastTrick(['5o', '6c', '7e', '11b'], '2o');
+    const t = playAll(s, '5o 6c 7e 11b');
+    expect(lastCardOf(t.steps)).toEqual([{ type: 'lastCard', seat: 3, card: c('11b'), outcome: 'miss', team: 0, points: 5 }]);
+    expect(t.state.scores).toEqual([5, 0]);
+    const sweep = eventsOf(t.steps, 'sweep')[0] as Extract<GameEvent, { type: 'sweep' }>;
+    expect(sweep.seat).toBe(0);
+    expect(sweep.cards).toContain(c('11b'));
+  });
+
+  it('le donneur prend avec une autre carte : rien de spécial', () => {
+    const s = lastTrick(['1o', '2c', '3e', '5b'], '5c');
+    const t = playAll(s, '1o 2c 3e 5b');
+    expect(lastCardOf(t.steps)).toEqual([]);
+    expect(t.state.scores).toEqual([0, 0]);
+  });
+
+  it('rebondir sur une darba avec un 12 compte comme une prise avec un 12', () => {
+    const s = lastTrick(['', '', '', '12b'], '4o');
+    s.pending = { owner: 2, victim: 1, rank: 12, cards: cs('12o 12c'), level: 1, missa: false };
+    s.turn = 3;
+    const t = applyPlay(s, 3, c('12b'));
+    expect(pointsOf(t.steps).map((p) => [p.team, p.reason, p.points])).toEqual([
+      [1, 'khamsa', 5],
+      [1, 'lastCard', 5],
+    ]);
+  });
+
+  it('la dernière carte peut faire gagner la partie', () => {
+    const s = lastTrick(['5o', '6c', '7e', '11b'], '2o', { target: 41 });
+    s.scores = [38, 20];
+    const t = playAll(s, '5o 6c 7e 11b');
+    expect(t.state.phase).toBe('gameOver');
+    expect(t.state.winner).toBe(0);
+    expect(t.state.scores).toEqual([43, 20]);
+  });
+
+  it('règle désactivée (0 point) : aucun effet', () => {
+    const s = lastTrick(['5o', '6c', '7e', '11b'], '2o', { lastCardPoints: 0 });
+    const t = playAll(s, '5o 6c 7e 11b');
+    expect(lastCardOf(t.steps)).toEqual([]);
+    expect(t.state.scores).toEqual([0, 0]);
+  });
+
+  it('en partie réelle, c’est toujours le donneur qui joue la dernière carte', () => {
+    const rng = createRng(31);
+    let seen = 0;
+    for (let g = 0; g < 120; g++) {
+      const players = g % 2 ? 4 : 2;
+      let { state } = newGame(makeRules(players, { target: 1000 }), { rng });
+      while (state.phase === 'play') {
+        const last = state.deck.length === 0 && state.hands.reduce((n, h) => n + h.length, 0) === 1;
+        if (last) expect(state.turn).toBe(state.dealer);
+        const card = pick(state.hands[state.turn], rng);
+        const t = applyPlay(state, state.turn, card);
+        const events = lastCardOf(t.steps);
+        if (!last) expect(events).toEqual([]);
+        else if (events.length) {
+          seen++;
+          const e = events[0];
+          expect(e.card).toBe(card);
+          const took = t.steps.some((st) => (st.event.type === 'capture' || st.event.type === 'darba') && st.event.seat === state.dealer);
+          expect(e.outcome).toBe(!took ? 'miss' : rankOf(card) === 12 ? 'king' : 'ace');
+          expect(e.team).toBe(e.outcome === 'king' ? state.dealer % 2 : (state.dealer + 1) % 2);
+        }
+        state = t.state;
+      }
+    }
+    expect(seen).toBeGreaterThan(30);
   });
 });
 

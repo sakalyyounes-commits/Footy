@@ -82,6 +82,9 @@ export const en: Dictionary = {
   'friends.points': '{n} points',
   'friends.chain': 'Chained darba',
   'friends.chain_sub': 'B’khamsa and b’achra: the next player can strike back',
+  'friends.last_card': 'Dealer’s last card',
+  'friends.last_card_sub':
+    'Taking with a 12: +5 for the dealer. With a 1 or taking nothing: +5 for the opponents',
   'friends.create_btn': 'Create table',
 
   'room.title': 'Your table',
@@ -103,6 +106,7 @@ export const en: Dictionary = {
   'room.rules': 'Play to {target} · {chain}',
   'room.chain_on': 'chained darba',
   'room.chain_off': 'simple darba',
+  'room.last_card': 'last card ±5',
   'room.stake': 'Stake: {n}',
   'room.leave': 'Leave the table',
 
@@ -133,6 +137,15 @@ export const en: Dictionary = {
   'game.announces': 'Announcements',
   'game.announce_win': '{name} wins the announcements',
   'game.announce_split': 'Tie: the pot is split',
+  'game.announce_lowest': 'Four rondas: the lowest wins',
+  'game.draw_title': 'Drawing for dealer',
+  'game.draw_sub': 'Lowest card deals',
+  'game.draw_tie': 'Tie! {names} draw again',
+  'game.draw_dealer': '{name} deals',
+  'game.last_card': 'Last card',
+  'game.last_card_king': '{name} takes with the 12: +{n} for {team}',
+  'game.last_card_ace': '{name} takes with the 1: +{n} for {team}',
+  'game.last_card_miss': '{name} takes nothing: +{n} for {team}',
   'game.sweep': '{name} takes the rest of the table',
   'game.round_over': 'End of round {n}',
   'game.cards': 'Cards',
@@ -172,6 +185,7 @@ export const en: Dictionary = {
   'reason.achra': 'B’achra',
   'reason.missa': 'Missa',
   'reason.cards': 'Cards',
+  'reason.lastCard': 'Last card',
 
   'phrase.salam': 'Salam 👋',
   'phrase.yallah': 'Yallah!',
@@ -313,6 +327,9 @@ export const en: Dictionary = {
   'rules.title': 'Ronda rules',
   'rules.intro':
     'Ronda is played with the 40-card Spanish deck: coins (dheb), cups (tbaye9), swords (syouf) and clubs (zrawet), from 1 to 7 then 10 (sota), 11 (caballo) and 12 (rey). Goal: reach 41 points before the other team.',
+  'rules.dealer_title': 'Who deals?',
+  'rules.dealer':
+    'At the start of the game, each player draws a card: the lowest deals (1, 2… 7, 10, 11, 12; suits don’t matter). If several players share the lowest card, only they draw again. The dealer deals starting with the player on their right, who plays first; next round, that player deals.',
   'rules.deal_title': 'Dealing',
   'rules.deal':
     'Two players: 4 cards each, 5 times per round. Four players (2 vs 2, partners facing each other): 4 cards each on the first deal, then 3 and 3. The table starts empty.',
@@ -321,16 +338,19 @@ export const en: Dictionary = {
     'On your turn, play a card. If a card of the same rank is on the table, you take it, plus every card that follows it without a gap (1-2-3-4-5-6-7-10-11-12). Example: your 5 takes the 5, then the 6, the 7 and the 10 if they are there.',
   'rules.announce_title': 'Ronda and Tringa',
   'rules.announce':
-    'A pair in your hand is a Ronda (1 point); three of a kind is a Tringa (5 points). When several players announce, the best combination (tringa beats ronda, then the higher rank) takes all the points; ties split the pot.',
+    'A pair in your hand is a Ronda (1 point); three of a kind is a Tringa (5 points). When several players announce, the highest ronda wins and takes all the points. A tringa beats every ronda (5 points plus 1 per ronda); between two tringas, the higher one wins. Exception: if all four players each have a ronda, the lowest one wins (with five rondas, when one player has two, the highest wins again). Ties split the pot.',
   'rules.darba_title': 'Darba: b’wahed, b’khamsa, b’achra',
   'rules.darba':
     'Capturing the card the previous player just played is a Darba: 1 point (b’wahed). In 2 vs 2, the next player can strike back with the third card of that rank (b’khamsa, 5 points), then the next with the fourth (b’achra, 10 points): the last to strike takes the whole pile and the points.',
   'rules.missa_title': 'Missa',
   'rules.missa': 'Clearing the whole table scores 1 point (except with the very last card of the round).',
+  'rules.lastcard_title': 'The dealer’s last card',
+  'rules.lastcard':
+    'The dealer plays the very last card of the round. Taking with a 12 scores 5 points for their team. Taking with a 1, or taking nothing, gives 5 points to the other team.',
   'rules.end_title': 'End of round',
   'rules.end':
     'When all cards are played, the last player to capture takes what is left on the table. Count the cards: each card above 20 is worth 1 point. The first team to 41 points wins, even mid-round!',
   'rules.tips_title': 'Master tips',
   'rules.tips':
-    'Remember the cards that are out: a card whose three twins have already fallen can’t be hit by a darba. Keep a capturing card for the end of the last deal: the last to capture sweeps the table.',
+    'Remember the cards that are out: a card whose three twins have already fallen can’t be hit by a darba. Dealer, keep a capturing card for the end, ideally a 12, never a 1: the last to capture also sweeps the table.',
 };

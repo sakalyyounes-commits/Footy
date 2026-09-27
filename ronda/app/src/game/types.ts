@@ -4,10 +4,12 @@ import type {
   Card,
   DarbaLevel,
   GameEvent,
+  LastCardOutcome,
   Mode,
   PlayerView,
   PointReason,
   Seat,
+  SeatPlay,
   Team,
 } from '@ronda/core';
 
@@ -28,8 +30,16 @@ export type Banner =
   | { id: number; kind: 'darba'; seat: Seat; level: DarbaLevel; points: number }
   | { id: number; kind: 'missa'; seat: Seat; points: number }
   | { id: number; kind: 'lastDeal' }
-  | { id: number; kind: 'announce'; entries: Announcement[]; winners: Seat[]; points: [number, number] }
-  | { id: number; kind: 'sweep'; seat: Seat; count: number };
+  | { id: number; kind: 'announce'; entries: Announcement[]; winners: Seat[]; points: [number, number]; lowest: boolean }
+  | { id: number; kind: 'sweep'; seat: Seat; count: number }
+  | { id: number; kind: 'lastCard'; seat: Seat; card: Card; outcome: LastCardOutcome; team: Team; points: number };
+
+/** Tirage du donneur en cours d'animation (début de partie). */
+export interface DrawDisplay {
+  id: number;
+  rounds: SeatPlay[][];
+  dealer: Seat;
+}
 
 export interface Floater {
   id: number;
@@ -79,6 +89,7 @@ export interface GameDisplay {
   deadline: number | null;
   turnMs: number;
   banner: Banner | null;
+  draw: DrawDisplay | null;
   floaters: Floater[];
   bubbles: Bubble[];
   summary: RoundSummary | null;

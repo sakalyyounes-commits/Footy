@@ -303,6 +303,8 @@
   left: 0;
   top: 0;
   transform: translate(-50%, -50%);
+  /* Au-dessus des cartes cachées : les bulles (ronda, messages) ne passent pas dessous. */
+  z-index: 2;
 }
 
 .seat-ring {
@@ -963,4 +965,107 @@
   .hand {
     height: 168px;
   }
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Tirage du donneur et dernière carte                                                          */
+/* ------------------------------------------------------------------------------------------ */
+
+.draw-spot {
+  position: absolute;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.draw-spot .pcard.tie {
+  filter: drop-shadow(0 0 9px rgba(255, 140, 60, 1)) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5));
+}
+
+.draw-spot .pcard.tie::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: calc(var(--cw, 60px) * 0.1);
+  border: 3px solid #ff9a3c;
+  box-shadow: 0 0 14px rgba(255, 140, 60, 0.9);
+  animation: pulse 0.7s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.draw-name {
+  max-width: 96px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  font-size: 10.5px;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.draw-name.dealer {
+  color: #5a3100;
+  background: linear-gradient(180deg, #fff09a, #ffc93a 60%, #f5a800);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.draw-caption {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 92%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.draw-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.1;
+  color: #ffe27a;
+  text-shadow:
+    0 2px 0 #6a3500,
+    0 0 14px rgba(255, 200, 60, 0.6);
+}
+
+.draw-text {
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(40, 24, 100, 0.92), rgba(10, 5, 30, 0.92));
+  border: 1.5px solid rgba(255, 213, 74, 0.55);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.25;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+}
+
+.draw-text.tie {
+  border-color: rgba(255, 140, 60, 0.9);
+  color: #ffd3b0;
+}
+
+.draw-text.final {
+  color: #5a3100;
+  background: linear-gradient(180deg, #fff09a, #ffc93a 60%, #f5a800);
+  border-color: #fff4c0;
+}
+
+.banner-word.last {
+  font-size: 44px;
+}
+
+.banner-sub.wrap {
+  white-space: normal;
+  max-width: min(340px, 88vw);
+  text-align: center;
 }

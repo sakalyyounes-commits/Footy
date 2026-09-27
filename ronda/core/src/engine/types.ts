@@ -91,11 +91,24 @@ export interface GameState {
   moveCount: number;
 }
 
-export type PointReason = 'ronda' | 'tringa' | 'darba' | 'khamsa' | 'achra' | 'missa' | 'cards';
+export type PointReason = 'ronda' | 'tringa' | 'darba' | 'khamsa' | 'achra' | 'missa' | 'cards' | 'lastCard';
 
 export const DARBA_REASONS: Record<DarbaLevel, PointReason> = { 1: 'darba', 2: 'khamsa', 3: 'achra' };
 
+/**
+ * Dernière carte de la manche, toujours jouée par le donneur : prendre avec un 12 rapporte les
+ * points à son équipe (« king ») ; prendre avec un 1 (« ace ») ou ne rien prendre (« miss ») les
+ * donne à l'équipe adverse.
+ */
+export type LastCardOutcome = 'king' | 'ace' | 'miss';
+
 export type GameEvent =
+  /**
+   * Tirage du donneur en début de partie : chaque joueur tire une carte, la plus petite donne.
+   * Chaque élément de `rounds` est un tirage ; en cas d'égalité sur la plus petite carte, seuls
+   * les joueurs à égalité retirent.
+   */
+  | { type: 'dealerDraw'; rounds: SeatPlay[][]; dealer: Seat }
   | { type: 'roundStart'; round: number; dealer: Seat }
   | { type: 'deal'; dealNo: number; count: number; last: boolean }
   | { type: 'announce'; seat: Seat; kinds: ComboKind[] }
@@ -105,11 +118,14 @@ export type GameEvent =
       entries: Announcement[];
       winners: Seat[];
       points: [number, number];
+      /** Les quatre joueurs avaient chacun une ronda : c'est la plus petite qui l'a emporté. */
+      lowest?: true;
     }
   | { type: 'play'; seat: Seat; card: Card }
   | { type: 'capture'; seat: Seat; card: Card; cards: Card[]; pending: boolean }
   | { type: 'darba'; seat: Seat; victim: Seat; level: DarbaLevel; rank: Rank }
   | { type: 'missa'; seat: Seat }
+  | { type: 'lastCard'; seat: Seat; card: Card; outcome: LastCardOutcome; team: Team; points: number }
   | { type: 'collect'; seat: Seat; cards: Card[] }
   | { type: 'points'; team: Team; seat: Seat | null; points: number; reason: PointReason }
   | { type: 'sweep'; seat: Seat; cards: Card[] }

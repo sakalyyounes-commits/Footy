@@ -8,6 +8,8 @@ export interface OfflineSetup {
   level: BotLevel;
   target: number;
   chain: boolean;
+  /** Règle de la dernière carte du donneur (absente des réglages enregistrés avant elle : activée). */
+  lastCard?: boolean;
 }
 
 export interface LocalStats {
@@ -49,7 +51,7 @@ export const useSettings = create<SettingsState>()(
       avatar: Math.floor(Math.random() * 16),
       onboarded: false,
       serverUrl: '',
-      offline: { mode: '2v2', level: 'medium', target: 41, chain: true },
+      offline: { mode: '2v2', level: 'medium', target: 41, chain: true, lastCard: true },
       localStats: { played: 0, won: 0 },
       cardBack: 'back-zellige',
       table: 'table-riad',

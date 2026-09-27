@@ -6,6 +6,7 @@ import {
   createRng,
   determinize,
   makeRules,
+  newDeck,
   newGame,
   nextRound,
   parseCard,
@@ -123,6 +124,28 @@ describe('choix des bots', () => {
       lastPlayed: { seat: 1, card: c('12b'), onTable: true },
     });
     expect(chooseCard(view, 'medium')).toBe(c('7o'));
+  });
+
+  it('donneur à deux cartes de la fin : garde le 12 qui prendra, pas le 1', () => {
+    // Dernière donne en 1v1 : le donneur (place 1) a 1o et 12c ; l'adversaire n'a plus que le 3e.
+    const hand = cs('1o 12c');
+    const hidden = cs('3e');
+    const played = newDeck().filter((x) => !hand.includes(x) && !hidden.includes(x));
+    const view = baseView({
+      seat: 1,
+      turn: 1,
+      dealer: 1,
+      dealNo: 5,
+      deckCount: 0,
+      hand,
+      handCounts: [1, 2],
+      table: cs('12b 4c'),
+      played,
+    });
+    expect(chooseCard(view, 'medium')).toBe(c('1o'));
+    expect(chooseCard(view, 'hard', { rng: createRng(2), samples: 20 })).toBe(c('1o'));
+    // Sans la règle, prendre le 12 tout de suite reste le meilleur coup.
+    expect(chooseCard({ ...view, rules: makeRules(2, { lastCardPoints: 0 }) }, 'medium')).toBe(c('12c'));
   });
 
   it('le bot expert reconstitue des mondes cohérents avec les annonces', () => {

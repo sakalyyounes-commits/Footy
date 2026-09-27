@@ -2,16 +2,24 @@
  * Règles de la Ronda et variantes réglables.
  *
  * Règles de base (les plus répandues au Maroc) :
+ * - En début de partie, chaque joueur tire une carte : la plus petite désigne le donneur (en cas
+ *   d'égalité, les joueurs à égalité retirent). Le donneur distribue, le joueur à sa droite
+ *   commence, et le donneur change d'une place vers la droite à chaque manche.
  * - 2 joueurs (1 contre 1) : 4 cartes chacun, 5 donnes par manche.
  * - 4 joueurs (2 contre 2, partenaires face à face) : 4 cartes à la première donne, puis 3 et 3.
  * - Le tapis est vide au départ. On prend la carte de même valeur et la suite qui la prolonge
  *   (1-2-3-4-5-6-7-10-11-12).
  * - Ronda (paire en main) : 1 point. Tringa (brelan) : 5 points. La meilleure annonce rafle
- *   les points de toutes les annonces ; une égalité au sommet partage le pot.
+ *   les points de toutes les annonces (une tringa bat toute ronda, puis le rang le plus haut) ;
+ *   une égalité au sommet partage le pot. Exception : quand les quatre joueurs ont chacun
+ *   exactement une ronda, c'est la plus petite qui gagne.
  * - Darba : prendre la carte que vient de poser le joueur précédent. B'wahed = 1 point ;
  *   le suivant peut « zid » avec la 3e carte (b'khamsa, 5 points) puis la 4e (b'achra, 10 points) :
  *   le dernier qui rebondit emporte tout le paquet et les points.
  * - Missa : vider le tapis, 1 point (sauf avec la toute dernière carte de la manche).
+ * - Dernière carte : le donneur joue la dernière carte de la manche. S'il prend avec un 12, son
+ *   équipe marque 5 points ; s'il prend avec un 1, ou s'il ne prend rien, l'équipe adverse marque
+ *   5 points.
  * - Fin de manche : le dernier à avoir pris ramasse le reste du tapis ; chaque carte au-delà
  *   de 20 vaut 1 point. La première équipe à 41 gagne immédiatement.
  */
@@ -26,6 +34,8 @@ export interface Rules {
   missaPoints: number;
   rondaPoints: number;
   tringaPoints: number;
+  /** Points de la dernière carte du donneur (12 pour lui, 1 ou rien pris pour l'adversaire) ; 0 : règle désactivée. */
+  lastCardPoints: number;
 }
 
 export type RulesPreset = 'classic' | 'quick';
@@ -39,6 +49,7 @@ export function makeRules(players: 2 | 4, overrides: Partial<Omit<Rules, 'player
     missaPoints: 1,
     rondaPoints: 1,
     tringaPoints: 5,
+    lastCardPoints: 5,
     ...overrides,
   };
 }
@@ -74,5 +85,6 @@ export function sanitizeRules(input: unknown, players: 2 | 4): Rules {
     missaPoints: int(r.missaPoints, 0, 10, base.missaPoints),
     rondaPoints: int(r.rondaPoints, 0, 10, base.rondaPoints),
     tringaPoints: int(r.tringaPoints, 0, 20, base.tringaPoints),
+    lastCardPoints: int(r.lastCardPoints, 0, 20, base.lastCardPoints),
   };
 }

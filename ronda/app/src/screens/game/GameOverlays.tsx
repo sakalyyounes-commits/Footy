@@ -26,7 +26,17 @@ function Burst({ color }: { color: string }) {
   );
 }
 
-export function BannerView({ banner, seats, myTeam }: { banner: Banner | null; seats: SeatDisplay[]; myTeam: number }) {
+export function BannerView({
+  banner,
+  seats,
+  myTeam,
+  labels,
+}: {
+  banner: Banner | null;
+  seats: SeatDisplay[];
+  myTeam: number;
+  labels: [string, string];
+}) {
   const t = useT();
   const nameOf = (seat: Seat) => seats[seat]?.name ?? '';
   return (
@@ -65,6 +75,26 @@ export function BannerView({ banner, seats, myTeam }: { banner: Banner | null; s
             </>
           )}
           {banner.kind === 'lastDeal' && <div className="banner-sub" style={{ fontSize: 18 }}>🃏 {t('game.last_deal')}</div>}
+          {banner.kind === 'lastCard' && (
+            <>
+              <Burst color={banner.team === myTeam ? '#f2c75c' : '#ff6b5b'} />
+              <div className={`banner-word last ${banner.team === myTeam ? '' : 'escalate'}`}>{t('game.last_card')}</div>
+              <motion.div
+                initial={{ rotateY: 180, scale: 0.5 }}
+                animate={{ rotateY: 0, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+              >
+                <PlayingCard card={banner.card} width={56} shared={false} initial={false} className="glow" />
+              </motion.div>
+              <div className="banner-sub wrap">
+                {t(`game.last_card_${banner.outcome}` as TranslationKey, {
+                  name: nameOf(banner.seat),
+                  n: banner.points,
+                  team: banner.team === myTeam ? labels[0] : labels[1],
+                })}
+              </div>
+            </>
+          )}
           {banner.kind === 'sweep' && <div className="banner-sub">{t('game.sweep', { name: nameOf(banner.seat) })}</div>}
           {banner.kind === 'announce' && (
             <div className="announce-card">
@@ -82,6 +112,11 @@ export function BannerView({ banner, seats, myTeam }: { banner: Banner | null; s
                   <span>{e.combos.map((c) => t(`reason.${c.kind}` as TranslationKey)).join(' + ')}</span>
                 </div>
               ))}
+              {banner.lowest && (
+                <div className="small gold-text" style={{ marginTop: 8, fontWeight: 800 }}>
+                  {t('game.announce_lowest')}
+                </div>
+              )}
               <div className="small muted" style={{ marginTop: 8 }}>
                 {banner.winners.length > 1 && new Set(banner.winners.map(teamOf)).size > 1
                   ? t('game.announce_split')

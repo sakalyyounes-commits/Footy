@@ -24,6 +24,7 @@ import {
   TimerRing,
 } from './GameParts';
 import { TableScene, type TableGeometry } from './Table3D';
+import { DealerDrawView, DrawCaption, useDrawStage } from './DealerDraw';
 import { BannerView, EmotePicker, Floaters, LeaveModal, ResultModal, RoundSummaryModal } from './GameOverlays';
 import { PlayingCard } from './PlayingCard';
 
@@ -62,6 +63,8 @@ function GameView({ game }: { game: GameController }) {
   const t = useT();
   const nav = useNav();
   const confirmPlay = useSettings((s) => s.confirmPlay);
+  const speed = useSettings((s) => s.speed) === 'fast' ? 0.6 : 1;
+  const drawStage = useDrawStage(d.draw, speed);
   const { w, h } = useViewport();
   const [selected, setSelected] = useState<Card | null>(null);
   const [emotes, setEmotes] = useState(false);
@@ -239,7 +242,8 @@ function GameView({ game }: { game: GameController }) {
                 back: d.cardBack,
                 bubble: bubbleOf(seat.seat),
                 dealing,
-                dealer: v.dealer === seat.seat,
+                // Pendant le tirage, on ne sait pas encore qui distribue.
+                dealer: v.dealer === seat.seat && !d.draw,
               };
             const place = (p: { x: number; y: number }) => ({ left: p.x, top: p.y });
             const topP = seatProps(topSeat);
@@ -302,6 +306,19 @@ function GameView({ game }: { game: GameController }) {
                 {topP && <SeatView {...topP} pos="top" style={place(g.seats.top)} />}
                 {leftP && <SeatView {...leftP} pos="left" style={place(g.seats.left)} />}
                 {rightP && <SeatView {...rightP} pos="right" style={place(g.seats.right)} />}
+                {d.draw && (
+                  <DealerDrawView
+                    key={d.draw.id}
+                    draw={d.draw}
+                    stage={drawStage}
+                    g={g}
+                    me={me}
+                    players={players}
+                    seats={d.seats}
+                    back={d.cardBack}
+                    cardW={Math.round(tableW * 0.9)}
+                  />
+                )}
               </>
             );
           }}
@@ -314,6 +331,11 @@ function GameView({ game }: { game: GameController }) {
               <div className="seat-avatar">
                 {mySeat && <FramedAvatar index={mySeat.avatar} size={44} frame={mySeat.frame} />}
                 {myTurn && <TimerRing deadline={d.deadline} total={d.turnMs} size={44} />}
+                {v.dealer === me && !d.draw && (
+                  <span className="dealer-puck" title={t('game.dealer')}>
+                    D
+                  </span>
+                )}
                 <SpeechBubble bubble={bubbleOf(me)} pos="bottom" />
               </div>
             </div>
@@ -349,6 +371,7 @@ function GameView({ game }: { game: GameController }) {
             )}
           </div>
           <div className="hand" style={{ height: handW * 1.5556 + 24 }}>
+            {d.draw && <DrawCaption key={d.draw.id} draw={d.draw} stage={drawStage} seats={d.seats} />}
             {v.hand.map((c, i) => {
               const mid = (n - 1) / 2;
               const lifted = selected === c || d.pendingPlay === c;
@@ -393,7 +416,7 @@ function GameView({ game }: { game: GameController }) {
 
       {/* Effets */}
       <div className="fx-layer">
-        <BannerView banner={d.banner} seats={d.seats} myTeam={myTeam} />
+        <BannerView banner={d.banner} seats={d.seats} myTeam={myTeam} labels={labels} />
         <Floaters floaters={d.floaters} myTeam={myTeam} posOf={posOf} />
       </div>
 

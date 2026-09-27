@@ -111,7 +111,8 @@ export class Match {
   }
 
   start(): void {
-    const t = newGame(this.rules, { deck: this.freshDeck(), dealer: randomInt(this.rules.players) });
+    // Chaque joueur tire une carte : la plus petite désigne le donneur (tirage animé chez chacun).
+    const t = newGame(this.rules, { deck: this.freshDeck(), rng: this.rng });
     this.state = t.state;
     this.track(t.steps);
     const first = t.steps[0]?.state ?? t.state;

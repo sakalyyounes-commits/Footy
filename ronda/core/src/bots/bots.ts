@@ -99,7 +99,7 @@ export function unseenByRank(view: Pick<PlayerView, 'hand' | 'played'>): number[
 /** Ce que le bot moyen regarde : la vue d'un joueur, ou un joueur d'un monde simulé. */
 type MediumSource = Pick<
   PlayerView,
-  'rules' | 'seat' | 'hand' | 'played' | 'table' | 'pending' | 'lastPlayed' | 'deckCount' | 'handCounts' | 'dealNo' | 'turn'
+  'rules' | 'seat' | 'hand' | 'played' | 'table' | 'pending' | 'lastPlayed' | 'deckCount' | 'handCounts' | 'dealNo' | 'turn' | 'dealer'
 >;
 
 /** Taille de la main avec laquelle le joueur `seat` jouera son prochain coup. */
@@ -147,7 +147,7 @@ function mediumScores(view: MediumSource, candidates: Card[]): number[] {
     return worst;
   };
 
-  return candidates.map((card) => {
+  const scores = candidates.map((card) => {
     const r = rankIndex(card);
     const pv = capturePreview(view, card);
     if (pv.captures.length === 0) {
@@ -167,6 +167,59 @@ function mediumScores(view: MediumSource, candidates: Card[]): number[] {
     }
     return gain - exposure(tableAfter, null);
   });
+  return scores.map((score, i) => score + lastCardOutlook(view, candidates[i]));
+}
+
+function permutations<T>(items: readonly T[]): T[][] {
+  if (items.length <= 1) return [items.slice()];
+  const out: T[][] = [];
+  items.forEach((x, i) => {
+    for (const rest of permutations([...items.slice(0, i), ...items.slice(i + 1)])) out.push([x, ...rest]);
+  });
+  return out;
+}
+
+/**
+ * Règle de la dernière carte, vue par le donneur à deux cartes de la fin de la manche : les
+ * autres joueurs n'ont plus qu'une carte chacun, qu'ils joueront forcément, et les cartes
+ * invisibles sont exactement celles-là. On essaie toutes leurs répartitions pour estimer ce que
+ * rapportera la carte gardée pour la fin (un 12 qui prend : gagné ; un 1, ou rien pris : perdu).
+ * Approximation : les rebonds de darba sur la dernière levée sont ignorés.
+ */
+function lastCardOutlook(view: MediumSource, play: Card): number {
+  const points = view.rules.lastCardPoints ?? 0;
+  if (points <= 0 || view.deckCount !== 0 || view.seat !== view.dealer || view.hand.length !== 2) return 0;
+  const keep = view.hand.find((c) => c !== play);
+  if (keep === undefined) return 0;
+  const others: number[] = [];
+  unseenByRank(view).forEach((count, r) => {
+    for (let i = 0; i < count; i++) others.push(r);
+  });
+  if (others.length !== view.rules.players - 1) return 0;
+  const kept = rankIndex(keep);
+  if (RANKS[kept] === 1) return -points;
+  // Tapis (en rangs) après la carte jouée maintenant.
+  const start = new Set(view.table.map(rankIndex));
+  const pv = capturePreview(view, play);
+  if (!pv.zid) {
+    if (pv.captures.length) for (const c of pv.captures) start.delete(rankIndex(c));
+    else start.add(rankIndex(play));
+  }
+  const orders = permutations(others);
+  let total = 0;
+  for (const order of orders) {
+    const table = new Set(start);
+    for (const r of order) {
+      if (!table.has(r)) {
+        table.add(r);
+        continue;
+      }
+      table.delete(r);
+      for (let k = r + 1; k < RANKS.length && table.has(k); k++) table.delete(k);
+    }
+    total += table.has(kept) ? (RANKS[kept] === 12 ? points : 0) : -points;
+  }
+  return total / orders.length;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -386,6 +439,7 @@ function rolloutCardMedium(s: GameState, rng: Rng): Card {
       handCounts: s.hands.map((h) => h.length),
       dealNo: s.dealNo,
       turn: seat,
+      dealer: s.dealer,
     },
     candidates,
   );

@@ -67,6 +67,17 @@ export function OfflineSetup() {
           </div>
           <Switch checked={setup.chain} onChange={(chain) => update({ chain })} label={t('friends.chain')} />
         </div>
+        <div className="panel row">
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800 }}>{t('friends.last_card')}</div>
+            <div className="small muted">{t('friends.last_card_sub')}</div>
+          </div>
+          <Switch
+            checked={setup.lastCard !== false}
+            onChange={(lastCard) => update({ lastCard })}
+            label={t('friends.last_card')}
+          />
+        </div>
         <button className="btn btn-gold btn-block btn-lg" onClick={start}>
           <Swords size={22} /> {t('offline.start')}
         </button>
