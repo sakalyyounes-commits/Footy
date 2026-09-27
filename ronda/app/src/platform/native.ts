@@ -67,7 +67,10 @@ export async function copyText(text: string): Promise<boolean> {
 /** Ouvre WhatsApp avec un message prêt à envoyer. */
 export function openWhatsApp(text: string): void {
   const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-  window.open(url, '_blank');
+  // Dans l'application, Capacitor ouvre les adresses externes hors de la WebView (WhatsApp ou le
+  // navigateur) ; window.open n'y est pas fiable.
+  if (isNative) window.location.href = url;
+  else window.open(url, '_blank', 'noopener');
 }
 
 /** Bouton retour d'Android. Renvoie une fonction de désinscription. */

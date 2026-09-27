@@ -346,7 +346,8 @@ export class Match {
     const s = this.state;
     if (s.phase !== 'play' || s.turn !== seat) return;
     const level: BotLevel = this.seats[seat].bot ?? 'medium';
-    const card = chooseCard(viewFor(s, seat), level, { rng: this.rng, samples: 40 });
+    // 24 mondes simulés : ~1,5 ms par décision experte, pour garder le serveur fluide sous charge.
+    const card = chooseCard(viewFor(s, seat), level, { rng: this.rng, samples: 24 });
     this.commit(applyPlay(s, seat, card));
   }
 

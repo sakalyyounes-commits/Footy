@@ -33,19 +33,25 @@ let ready: Promise<boolean> | null = null;
 export function initAds(): Promise<boolean> {
   if (!isNative) return Promise.resolve(false);
   ready ??= (async () => {
+    let admob: typeof import('@capacitor-community/admob');
     try {
-      const { AdMob, AdmobConsentStatus } = await import('@capacitor-community/admob');
-      await AdMob.initialize({ initializeForTesting: units().testing });
-      const consent = await AdMob.requestConsentInfo();
-      if (consent.isConsentFormAvailable && consent.status === AdmobConsentStatus.REQUIRED) {
-        await AdMob.showConsentForm();
-      }
-      if (platform === 'ios') await AdMob.requestTrackingAuthorization().catch(() => undefined);
-      return true;
+      admob = await import('@capacitor-community/admob');
+      await admob.AdMob.initialize({ initializeForTesting: units().testing });
     } catch (err) {
       console.warn('[ads] AdMob indisponible', err);
       return false;
     }
+    // Consentement RGPD (formulaire à configurer dans AdMob) : un échec ne coupe pas les publicités.
+    try {
+      const consent = await admob.AdMob.requestConsentInfo();
+      if (consent.isConsentFormAvailable && consent.status === admob.AdmobConsentStatus.REQUIRED) {
+        await admob.AdMob.showConsentForm();
+      }
+    } catch (err) {
+      console.warn('[ads] consentement non disponible', err);
+    }
+    if (platform === 'ios') await admob.AdMob.requestTrackingAuthorization().catch(() => undefined);
+    return true;
   })();
   return ready;
 }

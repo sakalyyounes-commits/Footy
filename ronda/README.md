@@ -125,8 +125,10 @@ docker run -d --restart unless-stopped -p 8080:8080 -v ronda-data:/data ronda
 
 Mettre un reverse proxy HTTPS devant (Caddy : `ronda.mondomaine.ma { reverse_proxy localhost:8080 }`).
 
-Un seul serveur tient plusieurs milliers de joueurs simultanés. Au-delà, voir
-[Limites connues](#limites-connues-et-suite).
+Capacité mesurée : **200 parties complètes jouées en parallèle** (100 en 1v1, 100 en 2v2 avec bots,
+sans aucun délai) sur un seul processus, avec une latence maximale de la boucle serveur de 22 ms.
+En conditions réelles (une carte toutes les 1 à 2 secondes par table), un petit serveur tient
+plusieurs centaines de tables simultanées. Au-delà, voir [Limites connues](#limites-connues-et-suite).
 
 ## Applications Android et iPhone
 
@@ -244,9 +246,10 @@ partagé par le serveur et l'application.
 ## Tests et qualité
 
 ```bash
-npm test            # 65+ tests : règles, bots, stockage, parties complètes en ligne
+npm test            # 67 tests : règles, bots, stockage, parties complètes en ligne
 npm run typecheck   # TypeScript strict sur les trois paquets
 npm run build       # vérification + builds de l'application et du serveur
+npm run e2e         # parcours joueurs dans Chromium (après npm run build ; npx playwright install chromium)
 ```
 
 - **Règles** : distribution, prises et suites, darba simple et en chaîne, missa, annonces avec
@@ -256,6 +259,9 @@ npm run build       # vérification + builds de l'application et du serveur
   ~90 % du temps et *M3allem* bat *Mtwasset* ~62-65 % (1v1 et 2v2).
 - **Serveur** : vrais WebSockets — comptes, reconnexion, file d'attente, tables complétées par des bots,
   salons 2v2 entre amis, abandon, coup illégal, webhook d'achat idempotent, limite anti-abus.
+- **Bout en bout** : le serveur construit sert la version web et deux navigateurs jouent réellement —
+  partie hors ligne, table entre amis rejointe par lien d'invitation par un nouveau joueur puis lancée,
+  file d'attente en ligne complétée par des bots signalés.
 - La **CI GitHub** relance tout à chaque push, compile l'APK Android et l'image Docker
   (et l'application iOS à la demande : *Run workflow* → cocher iOS).
 
