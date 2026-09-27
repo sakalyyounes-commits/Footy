@@ -1,0 +1,22 @@
+{
+  "name": "@ronda/server",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Serveur de jeu en ligne de Ronda Dyalna : comptes invités, matchmaking, salons privés, parties, pièces.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "esbuild src/main.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist/server.js",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@ronda/core": "*",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/ws": "^8.18.1",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.15"
+  }
+}

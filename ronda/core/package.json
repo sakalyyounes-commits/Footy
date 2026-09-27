@@ -1,0 +1,10 @@
+{
+  "name": "@ronda/core",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Règles du Ronda, bots, protocole réseau et économie partagés entre l'application et le serveur.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

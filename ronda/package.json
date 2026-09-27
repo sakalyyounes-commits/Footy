@@ -1,0 +1,27 @@
+{
+  "name": "ronda-dyalna",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Ronda Dyalna — le jeu de cartes marocain Ronda en ligne (Android, iPhone, web) : 1v1, 2v2, amis, hors ligne.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "workspaces": [
+    "core",
+    "server",
+    "app"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @ronda/app",
+    "dev:server": "npm run dev -w @ronda/server",
+    "test": "vitest run",
+    "typecheck": "tsc -p core --noEmit && tsc -p server --noEmit && tsc -p app --noEmit",
+    "build": "npm run typecheck && npm run build -w @ronda/app && npm run build -w @ronda/server",
+    "start": "npm run start -w @ronda/server"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2"
+  }
+}
